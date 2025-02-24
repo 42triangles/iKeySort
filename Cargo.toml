@@ -12,5 +12,13 @@ opt-level = 3
 lto = true
 codegen-units = 1
 
+[features]
+default = []
+allow_multithreading = ["rayon"]
+
+[dependencies.rayon]
+version = "^1.10"
+optional = true
+
 [dev-dependencies]
 rand = { version = "0.8.5", features = [] }

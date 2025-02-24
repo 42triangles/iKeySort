@@ -1,5 +1,6 @@
-use std::cmp::Ordering;
 use crate::index::{BinKey, BinLayout, Offset};
+use std::cmp::Ordering;
+use std::ptr;
 
 #[derive(Debug, Clone)]
 pub struct Bin {
@@ -48,7 +49,10 @@ where
         let layout = if let Some(layout) = BinLayout::new(min_key..max_key, self.len()) {
             layout
         } else {
-            return vec![Bin { offset: 0, data: self.len() }];
+            return vec![Bin {
+                offset: 0,
+                data: self.len(),
+            }];
         };
 
         let bin_count = layout.index(max_key) + 1;
@@ -65,17 +69,71 @@ where
         for bin in bins.iter_mut() {
             let next_offset = offset + bin.data;
             bin.offset = offset; // offset from start
-            bin.data = offset;   // iterator cursor
+            bin.data = offset; // iterator cursor
             offset = next_offset;
         }
 
-        let copy = self.to_vec();
+        let mut unused = Vec::with_capacity((self.len() + 1) / 2);
+        let last_bin = bins.len() - 1;
 
-        for item in copy.into_iter() {
+        // move items from all bins except last
+        let mut start = bins.first().unwrap().offset;
+        for cursor in 0..last_bin {
+            let end = unsafe { bins.get_unchecked(cursor + 1)}.offset;
+            if start < end {
+                let mut i0 = start;
+                for index in start..end {
+                    unsafe {
+                        let src_ptr = self.as_ptr().add(index);
+                        let bin_index = (*src_ptr).bin_index(&layout);
+                        if bin_index > cursor { continue }
+
+                        if i0 < index {
+                            unused.extend_from_slice(&self[i0..index]);
+                        }
+
+                        let bin = bins.get_unchecked_mut(bin_index);
+                        if bin.data != index {
+                            let dst_ptr = self.as_mut_ptr().add(bin.data);
+                            ptr::copy_nonoverlapping(src_ptr, dst_ptr, 1);
+                        }
+                        bin.data += 1;
+                    }
+                    i0 = index + 1;
+                }
+                if i0 < end {
+                    unused.extend_from_slice(&self[i0..end]);
+                }
+
+                start = end;
+            }
+        }
+
+        // move items from last bin
+        {
+            let start = unsafe { bins.get_unchecked(last_bin).offset };
+            for index in start..self.len() {
+                unsafe {
+                    let src_ptr = self.as_ptr().add(index);
+                    let bin_index = (*src_ptr).bin_index(&layout);
+                    let bin = bins.get_unchecked_mut(bin_index);
+                    if bin.data != index {
+                        let dst_ptr = self.as_mut_ptr().add(bin.data);
+                        ptr::copy_nonoverlapping(src_ptr, dst_ptr, 1);
+                    }
+                    bin.data += 1;
+                }
+            }
+        }
+
+        // move unused items
+        for item in unused.into_iter() {
             let index = item.bin_index(&layout);
-            let bin = unsafe { bins.get_unchecked_mut(index) };
-            *unsafe { self.get_unchecked_mut(bin.data) } = item;
-            bin.data += 1;
+            unsafe {
+                let bin = bins.get_unchecked_mut(index);
+                *self.get_unchecked_mut(bin.data) = item;
+                bin.data += 1;
+            }
         }
 
         bins
@@ -86,7 +144,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 16 {
+        if self.len() <= 128 {
             self.sort_by(|a, b| compare(a, b));
             return;
         }
@@ -106,7 +164,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 16 {
+        if self.len() <= 128 {
             self.sort_unstable_by(|a, b| compare(a, b));
             return;
         }
