@@ -26,19 +26,24 @@ where
     type Item = T;
 
     fn sort_by_bins(&mut self) -> Vec<Bin> {
-        let mut min_key = if let Some(item) = self.first() {
+        let first_key = if let Some(item) = self.first() {
             item.bin_key()
         } else {
             return vec![];
         };
 
-        let mut max_key = min_key;
+        let (max_key, min_key) = {
+            let mut max_key = first_key;
+            let mut min_key = first_key;
 
-        for p in self.iter() {
-            let key = p.bin_key();
-            min_key = key.min(min_key);
-            max_key = key.max(max_key);
-        }
+            for p in self.iter() {
+                let key = p.bin_key();
+                min_key = key.min(min_key);
+                max_key = key.max(max_key);
+            }
+
+            (max_key, min_key)
+        };
 
         let layout = if let Some(layout) = BinLayout::new(min_key..max_key, self.len()) {
             layout
@@ -49,16 +54,18 @@ where
         let bin_count = layout.index(max_key) + 1;
         let mut bins = vec![Bin { offset: 0, data: 0 }; bin_count];
 
+        // calculate capacity for each bin
         for p in self.iter() {
             let index = p.bin_index(&layout);
             unsafe { bins.get_unchecked_mut(index) }.data += 1;
         }
 
+        // calculate range for each bin
         let mut offset = 0;
         for bin in bins.iter_mut() {
             let next_offset = offset + bin.data;
-            bin.offset = offset;
-            bin.data = offset;
+            bin.offset = offset; // offset from start
+            bin.data = offset;   // iterator cursor
             offset = next_offset;
         }
 
