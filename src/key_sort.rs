@@ -1,4 +1,4 @@
-use crate::index::{BinKey, BinLayout, Offset};
+use crate::index::{BinKey, BinLayout, BinLayoutOp};
 use std::cmp::Ordering;
 use std::ptr;
 
@@ -22,7 +22,7 @@ pub trait KeyBinSort<T> {
 impl<T, U> KeyBinSort<U> for [T]
 where
     T: BinKey<U> + Clone,
-    U: Copy + Ord + Offset,
+    U: Copy + Ord + BinLayoutOp,
 {
     type Item = T;
 
