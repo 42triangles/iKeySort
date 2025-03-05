@@ -73,7 +73,7 @@ where
             offset = next_offset;
         }
 
-        let mut unused = Vec::with_capacity((self.len() + 1) / 2);
+        let mut unused = Vec::with_capacity(self.len() >> 1);
         let last_bin = bins.len() - 1;
 
         // move items from all bins except last
@@ -144,7 +144,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 128 {
+        if self.len() <= 256 {
             self.sort_by(|a, b| compare(a, b));
             return;
         }
@@ -164,7 +164,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 128 {
+        if self.len() <= 256 {
             self.sort_unstable_by(|a, b| compare(a, b));
             return;
         }

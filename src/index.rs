@@ -42,7 +42,7 @@ where
     #[inline(always)]
     pub fn new(range: Range<T>, elements_count: usize) -> Option<BinLayout<T>> {
         let delta = range.end.offset(range.start) + 1;
-        let max_possible_bin_count = delta.min(elements_count >> 1).min(8192);
+        let max_possible_bin_count = delta.min(elements_count >> 1).min(16384);
         if max_possible_bin_count <= 1 {
             return None;
         }
