@@ -1,4 +1,4 @@
-use crate::index::{BinKey, BinLayout, Offset};
+use crate::index::{BinKey, BinLayout, BinLayoutOp};
 use std::cmp::Ordering;
 use std::ptr;
 
@@ -22,7 +22,7 @@ pub trait KeyBinSort<T> {
 impl<T, U> KeyBinSort<U> for [T]
 where
     T: BinKey<U> + Clone,
-    U: Copy + Ord + Offset,
+    U: Copy + Ord + BinLayoutOp,
 {
     type Item = T;
 
@@ -73,22 +73,20 @@ where
             offset = next_offset;
         }
 
-        let mut unused = Vec::with_capacity((self.len() + 1) / 2);
+        let mut unused = Vec::with_capacity(self.len() >> 1);
         let last_bin = bins.len() - 1;
 
         // move items from all bins except last
         let mut start = bins.first().unwrap().offset;
         for cursor in 0..last_bin {
-            let end = unsafe { bins.get_unchecked(cursor + 1) }.offset;
+            let end = unsafe { bins.get_unchecked(cursor + 1)}.offset;
             if start < end {
                 let mut i0 = start;
                 for index in start..end {
                     unsafe {
                         let src_ptr = self.as_ptr().add(index);
                         let bin_index = (*src_ptr).bin_index(&layout);
-                        if bin_index > cursor {
-                            continue;
-                        }
+                        if bin_index > cursor { continue }
 
                         if i0 < index {
                             unused.extend_from_slice(&self[i0..index]);
@@ -146,7 +144,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 16 {
+        if self.len() <= 256 {
             self.sort_by(|a, b| compare(a, b));
             return;
         }
@@ -166,7 +164,7 @@ where
     where
         F: Fn(&T, &T) -> Ordering,
     {
-        if self.len() <= 16 {
+        if self.len() <= 256 {
             self.sort_unstable_by(|a, b| compare(a, b));
             return;
         }

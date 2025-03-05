@@ -1,24 +1,24 @@
 use std::ops::Range;
 
-pub trait Offset {
+pub trait BinLayoutOp {
     fn offset(self, other: Self) -> usize;
 }
 
-impl Offset for i64 {
+impl BinLayoutOp for i64 {
     #[inline(always)]
     fn offset(self, other: Self) -> usize {
         self.wrapping_sub(other) as usize
     }
 }
 
-impl Offset for i32 {
+impl BinLayoutOp for i32 {
     #[inline(always)]
     fn offset(self, other: Self) -> usize {
         (self as i64).wrapping_sub(other as i64) as usize
     }
 }
 
-impl Offset for usize {
+impl BinLayoutOp for usize {
     #[inline(always)]
     fn offset(self, other: Self) -> usize {
         self.wrapping_sub(other)
@@ -32,7 +32,7 @@ pub struct BinLayout<T> {
 
 impl<T> BinLayout<T>
 where
-    T: Copy + Offset + PartialOrd,
+    T: Copy + BinLayoutOp + PartialOrd,
 {
     #[inline(always)]
     pub fn index(&self, value: T) -> usize {
@@ -42,7 +42,7 @@ where
     #[inline(always)]
     pub fn new(range: Range<T>, elements_count: usize) -> Option<BinLayout<T>> {
         let delta = range.end.offset(range.start) + 1;
-        let max_possible_bin_count = delta.min(elements_count >> 1).min(8192);
+        let max_possible_bin_count = delta.min(elements_count >> 1).min(16384);
         if max_possible_bin_count <= 1 {
             return None;
         }
