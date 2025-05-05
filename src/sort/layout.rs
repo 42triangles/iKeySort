@@ -79,7 +79,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
-    pub fn feed_vec<T>(&mut self, vec: &mut Vec<T>, item: T)
+    pub fn feed_vec<T>(&mut self, vec: &mut [T], item: T)
     where
         T: BinKey<U>,
     {
