@@ -1,6 +1,7 @@
-use crate::index::{BinKey, BinLayout, BinLayoutOp};
+use crate::index::{BinKey, BinLayoutOp};
 use std::cmp::Ordering;
 use std::ptr;
+use crate::layout::BinStore;
 
 #[derive(Debug, Clone)]
 pub struct Bin {
@@ -46,8 +47,8 @@ where
             (max_key, min_key)
         };
 
-        let layout = if let Some(layout) = BinLayout::new(min_key..max_key, self.len()) {
-            layout
+        let mut store = if let Some(store) = BinStore::new(min_key, max_key, self.len()) {
+            store
         } else {
             return vec![Bin {
                 offset: 0,
@@ -55,23 +56,9 @@ where
             }];
         };
 
-        let bin_count = layout.index(max_key) + 1;
-        let mut bins = vec![Bin { offset: 0, data: 0 }; bin_count];
-
-        // calculate capacity for each bin
-        for p in self.iter() {
-            let index = p.bin_index(&layout);
-            unsafe { bins.get_unchecked_mut(index) }.data += 1;
-        }
-
-        // calculate range for each bin
-        let mut offset = 0;
-        for bin in bins.iter_mut() {
-            let next_offset = offset + bin.data;
-            bin.offset = offset; // offset from start
-            bin.data = offset; // iterator cursor
-            offset = next_offset;
-        }
+        store.layout_bins(self.iter());
+        let layout = store.layout;
+        let mut bins = store.bins;
 
         let mut unused = Vec::with_capacity(self.len() >> 1);
         let last_bin = bins.len() - 1;

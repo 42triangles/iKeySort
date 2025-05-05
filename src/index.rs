@@ -66,3 +66,17 @@ pub trait BinKey<T> {
     fn bin_key(&self) -> T;
     fn bin_index(&self, layout: &BinLayout<T>) -> usize;
 }
+
+
+impl BinKey<i32> for i32 {
+
+    #[inline]
+    fn bin_key(&self) -> i32 {
+        *self
+    }
+
+    #[inline]
+    fn bin_index(&self, layout: &BinLayout<i32>) -> usize {
+        layout.index(*self)
+    }
+}
