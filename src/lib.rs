@@ -1,4 +1,4 @@
-pub mod index;
-pub mod key_sort;
-pub mod layout;
-pub mod min_max;
+#[cfg(feature = "sort")]
+pub mod sort;
+#[cfg(feature = "bin_key")]
+pub mod bin_key;

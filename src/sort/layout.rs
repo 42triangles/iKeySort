@@ -1,10 +1,10 @@
+use crate::bin_key::index::{BinKey, BinLayout, BinLayoutOp};
+use crate::sort::key_sort::Bin;
 use std::cmp::Ordering;
-use crate::index::{BinKey, BinLayout, BinLayoutOp};
-use crate::key_sort::Bin;
 
 pub struct BinStore<U> {
     pub layout: BinLayout<U>,
-    pub bins: Vec<Bin>
+    pub bins: Vec<Bin>,
 }
 
 impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
@@ -14,14 +14,21 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
         let bin_count = layout.index(max) + 1;
         let bins = vec![Bin { offset: 0, data: 0 }; bin_count];
 
-        Some(Self {
-            layout,
-            bins
-        })
+        Some(Self { layout, bins })
     }
 
     #[inline]
     pub fn layout_bins<'a, I, T>(&mut self, iter: I)
+    where
+        I: Iterator<Item = &'a T>,
+        T: 'a + BinKey<U> + Clone,
+    {
+        self.reserve_bins_space(iter);
+        self.prepare_bins();
+    }
+
+    #[inline]
+    pub fn reserve_bins_space<'a, I, T>(&mut self, iter: I)
     where
         I: Iterator<Item = &'a T>,
         T: 'a + BinKey<U> + Clone,
@@ -31,7 +38,10 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             let index = p.bin_index(&self.layout);
             unsafe { self.bins.get_unchecked_mut(index) }.data += 1;
         }
+    }
 
+    #[inline]
+    pub fn prepare_bins(&mut self) {
         // calculate range for each bin
         let mut offset = 0;
         for bin in self.bins.iter_mut() {
@@ -43,24 +53,23 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
-    pub fn into_sorted_by_bins_vec<I, T, F>(self, count: usize, iter: I, compare: F) -> Vec<T>
+    pub fn into_sorted_by_bins_vec<I, T, F>(mut self, count: usize, iter: I, compare: F) -> Vec<T>
     where
         I: IntoIterator<Item = T>,
         T: BinKey<U> + Clone + Default,
-        F: FnMut(&T, &T) -> Ordering
+        F: Fn(&T, &T) -> Ordering,
     {
-        let layout = self.layout;
-        let mut bins = self.bins;
         let mut result = vec![T::default(); count];
 
         for p in iter {
-            let index = p.bin_index(&layout);
-            unsafe {
-                let bin = bins.get_unchecked_mut(index);
-                let item_index = bin.data;
-                bin.data += 1;
+            self.feed_vec(&mut result, p);
+        }
 
-                *result.get_unchecked_mut(item_index) = p;
+        for bin in self.bins.iter() {
+            let start = bin.offset;
+            let end = bin.data;
+            if start < end {
+                result[start..end].sort_unstable_by(|a, b| compare(a, b));
             }
         }
 
@@ -68,15 +77,29 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
 
         result
     }
-}
 
+    #[inline]
+    pub fn feed_vec<T>(&mut self, vec: &mut Vec<T>, item: T)
+    where
+        T: BinKey<U>,
+    {
+        let index = item.bin_index(&self.layout);
+        unsafe {
+            let bin = self.bins.get_unchecked_mut(index);
+            let item_index = bin.data;
+            bin.data += 1;
+
+            *vec.get_unchecked_mut(item_index) = item;
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
+    use crate::sort::layout::BinStore;
+    use crate::sort::min_max::min_max;
     use rand::Rng;
     use std::cmp::Ordering::Greater;
-    use crate::layout::BinStore;
-    use crate::min_max::min_max;
 
     #[test]
     fn test_0() {
@@ -105,8 +128,8 @@ mod tests {
             let array: Vec<i32> = (0..COUNT).map(|_| rng.random_range(0..100)).collect();
 
             let (&min, &max) = min_max(array.iter()).unwrap();
-            
-            let mut store= if let Some(store) = BinStore::new(min, max, COUNT) {
+
+            let mut store = if let Some(store) = BinStore::new(min, max, COUNT) {
                 store
             } else {
                 continue;
@@ -119,7 +142,19 @@ mod tests {
 
             for w in sorted.windows(2) {
                 assert_ne!(w[0].cmp(&w[1]), Greater);
-            }            
+            }
         }
+    }
+}
+
+impl BinKey<i32> for i32 {
+    #[inline]
+    fn bin_key(&self) -> i32 {
+        *self
+    }
+
+    #[inline]
+    fn bin_index(&self, layout: &BinLayout<i32>) -> usize {
+        layout.index(*self)
     }
 }

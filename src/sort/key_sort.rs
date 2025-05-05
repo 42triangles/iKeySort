@@ -1,7 +1,7 @@
-use crate::index::{BinKey, BinLayoutOp};
+use crate::bin_key::index::{BinKey, BinLayoutOp};
 use std::cmp::Ordering;
 use std::ptr;
-use crate::layout::BinStore;
+use crate::sort::layout::BinStore;
 
 #[derive(Debug, Clone)]
 pub struct Bin {

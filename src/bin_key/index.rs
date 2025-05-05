@@ -26,8 +26,8 @@ impl BinLayoutOp for usize {
 }
 
 pub struct BinLayout<T> {
-    pub(super) min_key: T,
-    pub(super) power: usize,
+    pub(crate) min_key: T,
+    pub(crate) power: usize,
 }
 
 impl<T> BinLayout<T>
@@ -56,27 +56,13 @@ where
     }
 }
 
-#[inline(always)]
-fn log2(value: usize) -> usize {
-    let n = value.leading_zeros();
-    (usize::BITS - n) as usize
-}
-
 pub trait BinKey<T> {
     fn bin_key(&self) -> T;
     fn bin_index(&self, layout: &BinLayout<T>) -> usize;
 }
 
-
-impl BinKey<i32> for i32 {
-
-    #[inline]
-    fn bin_key(&self) -> i32 {
-        *self
-    }
-
-    #[inline]
-    fn bin_index(&self, layout: &BinLayout<i32>) -> usize {
-        layout.index(*self)
-    }
+#[inline(always)]
+fn log2(value: usize) -> usize {
+    let n = value.leading_zeros();
+    (usize::BITS - n) as usize
 }
