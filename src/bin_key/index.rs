@@ -27,6 +27,7 @@ impl BinLayoutOp for usize {
 
 pub struct BinLayout<T> {
     pub(crate) min_key: T,
+    pub(crate) max_key: T,
     pub(crate) power: usize,
 }
 
@@ -37,6 +38,11 @@ where
     #[inline(always)]
     pub fn index(&self, value: T) -> usize {
         value.offset(self.min_key) >> self.power
+    }
+
+    #[inline(always)]
+    pub fn count(&self) -> usize {
+        self.index(self.max_key) + 1
     }
 
     #[inline(always)]
@@ -51,6 +57,7 @@ where
         let scale_power = log2(scale);
         Some(Self {
             min_key: range.start,
+            max_key: range.end,
             power: scale_power,
         })
     }

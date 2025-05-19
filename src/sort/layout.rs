@@ -8,6 +8,28 @@ pub struct BinStore<U> {
 }
 
 impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
+
+    #[inline]
+    pub fn empty(min_key: U, capacity: usize) -> Self {
+        let layout = BinLayout { min_key, max_key: min_key, power: 0 };
+        let bins = Vec::with_capacity(capacity);
+
+        Self { layout, bins }
+    }
+
+    #[inline]
+    pub fn init(&mut self, layout: BinLayout<U>) {
+        let bin_count = layout.count();
+        self.layout = layout;
+        if self.bins.capacity() < bin_count {
+            self.bins.reserve(bin_count - self.bins.capacity());
+        }
+        self.bins.clear();
+        for _ in 0..bin_count {
+            self.bins.push(Bin { offset: 0, data: 0 });
+        }
+    }
+
     #[inline]
     pub fn new(min: U, max: U, count: usize) -> Option<Self> {
         let layout = BinLayout::new(min..max, count)?;
@@ -41,7 +63,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
-    pub fn prepare_bins(&mut self) {
+    pub fn prepare_bins(&mut self) -> usize {
         // calculate range for each bin
         let mut offset = 0;
         for bin in self.bins.iter_mut() {
@@ -50,6 +72,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             bin.data = offset; // iterator cursor
             offset = next_offset;
         }
+        offset
     }
 
     #[inline]
