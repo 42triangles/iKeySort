@@ -1,6 +1,8 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use crate::bin_key::index::{BinKey, BinLayout, BinLayoutOp};
 use crate::sort::key_sort::Bin;
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 pub struct BinStore<U> {
     pub layout: BinLayout<U>,
@@ -119,10 +121,12 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+    use alloc::vec::Vec;
     use crate::sort::layout::BinStore;
     use crate::sort::min_max::min_max;
     use rand::Rng;
-    use std::cmp::Ordering::Greater;
+    use core::cmp::Ordering::Greater;
 
     #[test]
     fn test_0() {

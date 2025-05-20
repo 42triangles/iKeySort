@@ -1,4 +1,4 @@
-use std::ops::Range;
+use core::ops::Range;
 
 pub trait BinLayoutOp {
     fn offset(self, other: Self) -> usize;

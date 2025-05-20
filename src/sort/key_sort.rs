@@ -1,6 +1,8 @@
+use alloc::vec;
+use alloc::vec::Vec;
 use crate::bin_key::index::{BinKey, BinLayoutOp};
-use std::cmp::Ordering;
-use std::ptr;
+use core::cmp::Ordering;
+use core::ptr;
 use crate::sort::layout::BinStore;
 
 #[derive(Debug, Clone)]
