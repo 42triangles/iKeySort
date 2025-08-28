@@ -98,8 +98,6 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             }
         }
 
-        result.sort_by(compare);
-
         result
     }
 
