@@ -49,27 +49,43 @@ where
     pub fn new(range: Range<T>, elements_count: usize) -> Option<BinLayout<T>> {
         let delta = range.end.offset(range.start) + 1;
         let max_possible_bin_count = delta.min(elements_count >> 1).min(16384);
-        if max_possible_bin_count <= 1 {
+        let scale = delta / max_possible_bin_count;
+        if scale <= 1 {
             return None;
         }
 
-        let scale = delta / max_possible_bin_count;
-        let scale_power = log2(scale);
+        let mut scale_power = scale.ilog2();
+        if 1 << scale_power < scale {
+            scale_power += 1;
+        }
+
         Some(Self {
             min_key: range.start,
             max_key: range.end,
-            power: scale_power,
+            power: scale_power as usize,
         })
+    }
+
+    #[inline(always)]
+    pub fn new_anyway(range: Range<T>, elements_count: usize) -> BinLayout<T> {
+        let delta = range.end.offset(range.start) + 1;
+        let max_possible_bin_count = delta.min(elements_count >> 1).min(16384).max(1);
+
+        let scale = delta / max_possible_bin_count;
+        let mut scale_power = scale.ilog2();
+        if 1 << scale_power < scale {
+            scale_power += 1;
+        }
+
+        Self {
+            min_key: range.start,
+            max_key: range.end,
+            power: scale_power as usize,
+        }
     }
 }
 
 pub trait BinKey<T> {
     fn bin_key(&self) -> T;
     fn bin_index(&self, layout: &BinLayout<T>) -> usize;
-}
-
-#[inline(always)]
-fn log2(value: usize) -> usize {
-    let n = value.leading_zeros();
-    (usize::BITS - n) as usize
 }

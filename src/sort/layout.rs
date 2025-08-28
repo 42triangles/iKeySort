@@ -23,13 +23,13 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     pub fn init(&mut self, layout: BinLayout<U>) {
         let bin_count = layout.count();
         self.layout = layout;
-        if self.bins.capacity() < bin_count {
-            self.bins.reserve(bin_count - self.bins.capacity());
-        }
         self.bins.clear();
-        for _ in 0..bin_count {
-            self.bins.push(Bin { offset: 0, data: 0 });
-        }
+        self.bins.resize(bin_count, Bin { offset: 0, data: 0 });
+    }
+
+    #[inline]
+    pub fn clear(&mut self) {
+        self.bins.fill(Bin { offset: 0, data: 0 });
     }
 
     #[inline]
@@ -39,6 +39,15 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
         let bins = vec![Bin { offset: 0, data: 0 }; bin_count];
 
         Some(Self { layout, bins })
+    }
+
+    #[inline]
+    pub fn new_anyway(min: U, max: U, count: usize) -> Self {
+        let layout = BinLayout::new_anyway(min..max, count);
+        let bin_count = layout.index(max) + 1;
+        let bins = vec![Bin { offset: 0, data: 0 }; bin_count];
+
+        Self { layout, bins }
     }
 
     #[inline]
@@ -60,6 +69,19 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
         // calculate capacity for each bin
         for p in iter {
             let index = p.bin_index(&self.layout);
+            unsafe { self.bins.get_unchecked_mut(index) }.data += 1;
+        }
+    }
+
+    #[inline]
+    pub fn reserve_bins_space_with_key<I>(&mut self, iter: I)
+    where
+        I: Iterator<Item = U>,
+        U: Copy + BinLayoutOp + PartialOrd,
+    {
+        // calculate capacity for each bin
+        for k in iter {
+            let index = self.layout.index(k);
             unsafe { self.bins.get_unchecked_mut(index) }.data += 1;
         }
     }
@@ -90,13 +112,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             self.feed_vec(&mut result, p);
         }
 
-        for bin in self.bins.iter() {
-            let start = bin.offset;
-            let end = bin.data;
-            if start < end {
-                result[start..end].sort_unstable_by(|a, b| compare(a, b));
-            }
-        }
+        self.sort_by_bins(&mut result, compare);
 
         result
     }
@@ -113,6 +129,57 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             bin.data += 1;
 
             *vec.get_unchecked_mut(item_index) = item;
+        }
+    }
+
+    #[inline]
+    pub fn sort_by_bins<T, F>(&self, target: &mut [T], compare: F)
+    where
+        F: Fn(&T, &T) -> Ordering,
+    {
+        for bin in self.bins.iter() {
+            let start = bin.offset;
+            let end = bin.data;
+            if start < end {
+                target[start..end].sort_unstable_by(|a, b| compare(a, b));
+            }
+        }
+    }
+
+    #[inline]
+    pub fn feed_vec_by_key<T, K>(&mut self, vec: &mut [T], item: T, key: K)
+    where
+        U: Copy + BinLayoutOp + PartialOrd,
+        K: Fn(&T) -> U,
+    {
+        let value = key(&item);
+        let index = self.layout.index(value);
+        unsafe {
+            let bin = self.bins.get_unchecked_mut(index);
+            let item_index = bin.data;
+            bin.data += 1;
+
+            *vec.get_unchecked_mut(item_index) = item;
+        }
+    }
+
+    #[inline]
+    pub fn copy_by_key<T, K>(&mut self, source: &[T], target: &mut [T], key: K)
+    where
+        U: Copy + BinLayoutOp + PartialOrd,
+        T: Clone,
+        K: Fn(&T) -> U,
+    {
+        for item in source.iter() {
+            let value = key(&item);
+            let index = self.layout.index(value);
+            unsafe {
+                let bin = self.bins.get_unchecked_mut(index);
+                let item_index = bin.data;
+                bin.data += 1;
+
+                *target.get_unchecked_mut(item_index) = item.clone();
+            }
         }
     }
 }
