@@ -48,7 +48,7 @@ where
     #[inline(always)]
     pub fn new(range: Range<T>, elements_count: usize) -> Option<BinLayout<T>> {
         let delta = range.end.offset(range.start) + 1;
-        let max_possible_bin_count = delta.min(elements_count >> 1).min(16384);
+        let max_possible_bin_count = delta.min(elements_count >> 1).min(16384).max(1);
         let scale = delta / max_possible_bin_count;
         if scale <= 1 {
             return None;
@@ -67,11 +67,20 @@ where
     }
 
     #[inline(always)]
+    pub fn with_range_and_power(range: Range<T>, power: usize) -> BinLayout<T> {
+        Self {
+            min_key: range.start,
+            max_key: range.end,
+            power,
+        }
+    }
+
+    #[inline(always)]
     pub fn new_anyway(range: Range<T>, elements_count: usize) -> BinLayout<T> {
         let delta = range.end.offset(range.start) + 1;
         let max_possible_bin_count = delta.min(elements_count >> 1).min(16384).max(1);
-
         let scale = delta / max_possible_bin_count;
+
         let mut scale_power = scale.ilog2();
         if 1 << scale_power < scale {
             scale_power += 1;

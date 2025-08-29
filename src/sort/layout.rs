@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 use crate::bin_key::index::{BinKey, BinLayout, BinLayoutOp};
 use crate::sort::key_sort::Bin;
 use core::cmp::Ordering;
+use core::ops::Range;
 
 pub struct BinStore<U> {
     pub layout: BinLayout<U>,
@@ -35,8 +36,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     #[inline]
     pub fn new(min: U, max: U, count: usize) -> Option<Self> {
         let layout = BinLayout::new(min..max, count)?;
-        let bin_count = layout.index(max) + 1;
-        let bins = vec![Bin { offset: 0, data: 0 }; bin_count];
+        let bins = vec![Bin { offset: 0, data: 0 }; layout.count()];
 
         Some(Self { layout, bins })
     }
@@ -44,9 +44,15 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     #[inline]
     pub fn new_anyway(min: U, max: U, count: usize) -> Self {
         let layout = BinLayout::new_anyway(min..max, count);
-        let bin_count = layout.index(max) + 1;
-        let bins = vec![Bin { offset: 0, data: 0 }; bin_count];
+        let bins = vec![Bin { offset: 0, data: 0 }; layout.count()];
 
+        Self { layout, bins }
+    }
+
+    #[inline]
+    pub fn with_range_and_power(range: Range<U>, power: usize) -> Self {
+        let layout = BinLayout::with_range_and_power(range, power);
+        let bins = vec![Bin { offset: 0, data: 0 }; layout.count()];
         Self { layout, bins }
     }
 
