@@ -50,6 +50,13 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
+    pub fn resize(&mut self, min: U, max: U, count: usize) {
+        self.layout = BinLayout::new_anyway(min..max, count);
+        self.bins.clear();
+        self.bins.resize(self.layout.count(), Bin { offset: 0, data: 0 });
+    }
+
+    #[inline]
     pub fn with_range_and_power(range: Range<U>, power: usize) -> Self {
         let layout = BinLayout::with_range_and_power(range, power);
         let bins = vec![Bin { offset: 0, data: 0 }; layout.count()];
@@ -59,7 +66,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     #[inline]
     pub fn layout_bins<'a, I, T>(&mut self, iter: I)
     where
-        I: Iterator<Item = &'a T>,
+        I: IntoIterator<Item = &'a T>,
         T: 'a + BinKey<U> + Clone,
     {
         self.reserve_bins_space(iter);
@@ -69,7 +76,7 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     #[inline]
     pub fn reserve_bins_space<'a, I, T>(&mut self, iter: I)
     where
-        I: Iterator<Item = &'a T>,
+        I: IntoIterator<Item = &'a T>,
         T: 'a + BinKey<U> + Clone,
     {
         // calculate capacity for each bin
@@ -80,9 +87,9 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
-    pub fn reserve_bins_space_with_key<I>(&mut self, iter: I)
+    pub fn reserve_bins_with_key<I>(&mut self, iter: I)
     where
-        I: Iterator<Item = U>,
+        I: IntoIterator<Item = U>,
         U: Copy + BinLayoutOp + PartialOrd,
     {
         // calculate capacity for each bin
@@ -90,6 +97,15 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
             let index = self.layout.index(k);
             unsafe { self.bins.get_unchecked_mut(index) }.data += 1;
         }
+    }
+
+    #[inline]
+    pub fn reserve_bins_for_key(&mut self, key: U)
+    where
+        U: Copy + BinLayoutOp + PartialOrd,
+    {
+        let index = self.layout.index(key);
+        unsafe { self.bins.get_unchecked_mut(index) }.data += 1;
     }
 
     #[inline]
@@ -153,13 +169,11 @@ impl<U: Copy + Ord + BinLayoutOp> BinStore<U> {
     }
 
     #[inline]
-    pub fn feed_vec_by_key<T, K>(&mut self, vec: &mut [T], item: T, key: K)
+    pub fn feed_by_key<T>(&mut self, vec: &mut [T], item: T, key: U)
     where
         U: Copy + BinLayoutOp + PartialOrd,
-        K: Fn(&T) -> U,
     {
-        let value = key(&item);
-        let index = self.layout.index(value);
+        let index = self.layout.index(key);
         unsafe {
             let bin = self.bins.get_unchecked_mut(index);
             let item_index = bin.data;
