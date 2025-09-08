@@ -1,7 +1,5 @@
-#![no_std]
-extern crate alloc;
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "sort")]
-pub mod sort;
-#[cfg(feature = "bin_key")]
-pub mod bin_key;
+mod sort;
+
+extern crate alloc;

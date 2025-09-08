@@ -1,16 +1,31 @@
-pub fn min_max<T: Ord + Copy>(iter: impl Iterator<Item = T>) -> Option<(T, T)> {
-    let mut iter = iter;
-    let first = iter.next()?;
-    let mut min = first;
-    let mut max = first;
+use crate::sort::key::KeyFn;
 
-    for x in iter {
-        if x < min {
-            min = x;
-        } else if x > max {
-            max = x;
+pub(crate) trait MinMax<T> {
+    fn min_max<K, F>(&self, key: F) -> (K, K)
+    where
+        K: Copy + Ord,
+        F: KeyFn<T, K>;
+}
+
+impl<T> MinMax<T> for [T] {
+    #[inline(always)]
+    fn min_max<K, F: KeyFn<T, K>>(&self, key: F) -> (K, K)
+    where
+        K: Copy + Ord,
+    {
+        debug_assert!(!self.is_empty());
+        let first_val = self.first().unwrap();
+        let first_key = key(first_val);
+
+        let mut min_key = first_key;
+        let mut max_key = first_key;
+
+        for val in self.iter().skip(1) {
+            let k = key(val);
+            min_key = min_key.min(k);
+            max_key = max_key.max(k);
         }
-    }
 
-    Some((min, max))
+        (min_key, max_key)
+    }
 }
