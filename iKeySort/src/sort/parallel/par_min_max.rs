@@ -1,5 +1,6 @@
 use crate::sort::key::KeyFn;
 use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 
 pub(super) trait ParMinMax<T> {
     fn par_min_max<K, F>(&self, key: F) -> (K, K)

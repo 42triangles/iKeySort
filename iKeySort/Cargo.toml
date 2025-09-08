@@ -18,7 +18,7 @@ codegen-units = 1
 rayon = { optional = true, version = "^1.11" }
 
 [features]
-default = []
+default = ["allow_multithreading"]
 std = []
 allow_multithreading = ["std", "dep:rayon"]
 

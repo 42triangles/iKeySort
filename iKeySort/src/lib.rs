@@ -1,5 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod sort;
+pub mod sort;
 
 extern crate alloc;

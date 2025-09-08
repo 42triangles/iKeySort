@@ -1,6 +1,6 @@
 use crate::sort::bin_layout::{BinLayout, MAX_BINS_COUNT};
 use crate::sort::key::{KeyFn, SortKey};
-use crate::sort::min_max::MinMax;
+use crate::sort::parallel::par_min_max::ParMinMax;
 use crate::sort::parallel::fragment::{Fragment, IdRange};
 use crate::sort::parallel::fragmentation::Fragmentation;
 use rayon::iter::IntoParallelRefMutIterator;
