@@ -1,8 +1,8 @@
+use crate::geom::id_point::IdPoint;
 use crate::geom::start_segment::StartEnd;
-use std::time::Instant;
 use i_key_sort::sort::key_sort::KeySort;
 use rayon::slice::ParallelSliceMut;
-use crate::geom::id_point::IdPoint;
+use std::time::Instant;
 
 pub struct SortSolution;
 
@@ -11,64 +11,94 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        data.sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("sort_unstable", data.last().unwrap().end().x, start);
+        Self::print_result("sort_unstable", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_sort_stable<S: StartEnd>(segments: &[S]) {
         let mut data = segments.to_vec();
-
         let start = Instant::now();
 
-        data.sort_by(|s0, s1| s0.cmp_by_start(s1));
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.sort_by(|s0, s1| s0.cmp_by_start(s1));
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("sort_stable", data.last().unwrap().end().x, start);
+        Self::print_result("sort_stable", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_par_sort_unstable<S: StartEnd>(segments: &[S]) {
         let mut data = segments.to_vec();
-
         let start = Instant::now();
 
-        data.par_sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.par_sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par_sort_unstable", data.last().unwrap().end().x, start);
+        Self::print_result("par_sort_unstable", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_par_sort_stable<S: StartEnd>(segments: &[S]) {
         let mut data = segments.to_vec();
-
         let start = Instant::now();
 
-        data.par_sort_by(|s0, s1| s0.cmp_by_start(s1));
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.par_sort_by(|s0, s1| s0.cmp_by_start(s1));
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par_sort_stable", data.last().unwrap().end().x, start);
+        Self::print_result("par_sort_stable", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) {
         let mut data = segments.to_vec();
-
         let start = Instant::now();
 
-        data.sort_by_two_keys(false, |s| s.start().x, |s| s.start().y);
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.sort_by_two_keys(false, |s| s.start().x, |s| s.start().y);
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("bin_sort", data.last().unwrap().end().x, start);
+        Self::print_result("bin_sort", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_par_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        data.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
+        let n = 1000_000 / segments.len().max(1);
+        for _ in 0..n {
+            data.copy_from_slice(&segments);
+            data.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
+        }
+        let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par bin_sort", data.last().unwrap().end().x, start);
+        Self::print_result("par bin_sort", data.last().unwrap().end().x, duration);
     }
 
     pub fn run_segments_ref_sort<S: StartEnd + Copy + Default>(segments: &[S]) {
         let start = Instant::now();
 
-        let mut rfs: Vec<_> = segments.iter().enumerate().map(|(i, s)|IdPoint::new(i, *s.start())).collect();
+        let mut rfs: Vec<_> = segments
+            .iter()
+            .enumerate()
+            .map(|(i, s)| IdPoint::new(i, *s.start()))
+            .collect();
 
         rfs.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
 
@@ -78,12 +108,12 @@ impl SortSolution {
                 *data.get_unchecked_mut(rf.id) = *s;
             }
         }
+        let duration = start.elapsed().as_secs_f64();
 
-        Self::print_result("ref sort", data.last().unwrap().end().x, start);
+        Self::print_result("ref sort", data.last().unwrap().end().x, duration);
     }
 
-    fn print_result(title: &str, result: i32, start: Instant) {
-        let duration = start.elapsed().as_secs_f64();
+    fn print_result(title: &str, result: i32, duration: f64) {
         println!("{} - {:.6} hash: {}", title, duration, result);
     }
 

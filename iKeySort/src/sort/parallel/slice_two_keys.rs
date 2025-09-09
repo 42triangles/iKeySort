@@ -16,7 +16,6 @@ pub(crate) trait TwoKeysBinSortParallel<T> {
 }
 
 impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
-    #[inline]
     fn par_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
         &mut self,
         key1: F1,
@@ -26,17 +25,13 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
             return;
         }
 
-        #[cfg(debug_assertions)]
-        const MIN_PAR_LEN: usize = 64_000;
-
-        #[cfg(not(debug_assertions))]
-        const MIN_PAR_LEN: usize = 0;
-
-        let cpu = CPUCount::count();
-        if cpu == 1 || self.len() < MIN_PAR_LEN {
+        let cpu =if let Some(count) = CPUCount::should_parallel(self.len()) {
+            count
+        } else {
             self.ser_sort_by_two_keys(key1, key2);
             return;
-        }
+        };
+
         if let Some((marks, mut buffer)) = self.par_pre_sort(cpu, key1) {
             self.fragment_by_marks(&mut buffer, &marks)
                 .par_iter_mut()

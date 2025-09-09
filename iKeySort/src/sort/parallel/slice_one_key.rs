@@ -17,17 +17,12 @@ impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
             return;
         }
 
-        #[cfg(debug_assertions)]
-        const MIN_PAR_LEN: usize = 64_000;
-
-        #[cfg(not(debug_assertions))]
-        const MIN_PAR_LEN: usize = 0;
-
-        let cpu = CPUCount::count();
-        if cpu == 1 || self.len() < MIN_PAR_LEN {
+        let cpu =if let Some(count) = CPUCount::should_parallel(self.len()) {
+            count
+        } else {
             self.ser_sort_by_one_key(key);
             return;
-        }
+        };
 
         if let Some((marks, mut buf)) = self.par_pre_sort(cpu, key) {
             self.fragment_by_marks(&mut buf, &marks)
@@ -50,5 +45,3 @@ where
         self.src.sort_by_one_key_and_uninit_buffer(self.buf, key);
     }
 }
-
-

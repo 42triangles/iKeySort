@@ -27,7 +27,6 @@ pub(crate) trait TwoKeysBinSortSerial<T> {
 }
 
 impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
-    #[inline]
     fn ser_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
         &mut self,
         key1: F1,
@@ -41,6 +40,7 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
         };
     }
 
+    #[inline]
     fn sort_by_two_keys_and_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
         &mut self,
         buffer: &mut [T],

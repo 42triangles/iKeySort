@@ -19,6 +19,7 @@ pub(super) trait PreSort<T> {
 }
 
 impl<T: Copy + Send + Sync> PreSort<T> for [T] {
+    #[inline]
     fn par_pre_sort<K: SortKey, F: KeyFn<T, K>>(
         &mut self,
         cpu: usize,
@@ -54,6 +55,8 @@ impl<T: Copy + Send + Sync> PreSort<T> for [T] {
 }
 
 impl<K: SortKey> BinLayout<K> {
+
+    #[inline]
     fn par_spread<T, F>(&self, fragments: &mut [Fragment<T>], key: F) -> Vec<Vec<Range<usize>>>
     where
         T: Copy + Send + Sync,

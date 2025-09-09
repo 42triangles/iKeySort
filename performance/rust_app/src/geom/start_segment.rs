@@ -5,7 +5,7 @@ use crate::geom::index_segm::IndexSegment;
 use crate::geom::point::Point;
 use crate::geom::segm::Segment;
 
-pub trait StartEnd: Clone + Send + Sync {
+pub trait StartEnd: Clone + Send + Sync + Copy {
     fn start(&self) -> &Point;
     fn end(&self) -> &Point;
 

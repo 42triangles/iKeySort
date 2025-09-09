@@ -76,6 +76,7 @@ impl<T: Copy> KeySort<T> for [T] {
     }
 }
 
+#[inline]
 fn sort_unstable_by_two_keys<T, K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(slice: &mut [T], key1: F1, key2: F2) {
     slice.sort_unstable_by(|a, b| key1(a).cmp(&key1(b)).then(key2(a).cmp(&key2(b))));
 }
