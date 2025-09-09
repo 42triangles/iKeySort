@@ -1,13 +1,13 @@
-use rayon::prelude::*;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::fragment::Fragment;
 use crate::sort::parallel::fragmentation::Fragmentation;
 use crate::sort::parallel::presort::PreSort;
 use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
-use crate::sort::serial::slice_two_keys::{TwoKeysBinSortSerial, TwoKeysBufferBinSortSerial};
+use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
+use rayon::prelude::*;
 
-pub trait TwoKeysBinSortParallel<T> {
+pub(crate) trait TwoKeysBinSortParallel<T> {
     fn par_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
         &mut self,
         key1: F1,
@@ -26,9 +26,15 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
             return;
         }
 
+        #[cfg(debug_assertions)]
+        const MIN_PAR_LEN: usize = 64_000;
+
+        #[cfg(not(debug_assertions))]
+        const MIN_PAR_LEN: usize = 0;
+
         let cpu = CPUCount::count();
-        if cpu == 1 {
-            self.sort_by_two_keys(key1, key2);
+        if cpu == 1 || self.len() < MIN_PAR_LEN {
+            self.ser_sort_by_two_keys(key1, key2);
             return;
         }
         if let Some((marks, mut buffer)) = self.par_pre_sort(cpu, key1) {

@@ -1,7 +1,6 @@
 use crate::geom::start_segment::StartEnd;
 use std::time::Instant;
-use i_key_sort::sort::parallel::slice_two_keys::TwoKeysBinSortParallel;
-use i_key_sort::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
+use i_key_sort::sort::key_sort::KeySort;
 use rayon::slice::ParallelSliceMut;
 use crate::geom::id_point::IdPoint;
 
@@ -52,7 +51,7 @@ impl SortSolution {
 
         let start = Instant::now();
 
-        data.sort_by_two_keys(|s| s.start().x, |s| s.start().y);
+        data.sort_by_two_keys(false, |s| s.start().x, |s| s.start().y);
 
         Self::print_result("bin_sort", data.last().unwrap().end().x, start);
     }
@@ -61,7 +60,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        data.par_sort_by_two_keys(|s| s.start().x, |s| s.start().y);
+        data.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
 
         Self::print_result("par bin_sort", data.last().unwrap().end().x, start);
     }
@@ -71,7 +70,7 @@ impl SortSolution {
 
         let mut rfs: Vec<_> = segments.iter().enumerate().map(|(i, s)|IdPoint::new(i, *s.start())).collect();
 
-        rfs.par_sort_by_two_keys(|s| s.start().x, |s| s.start().y);
+        rfs.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
 
         let mut data = vec![S::default(); segments.len()];
         for (rf, s) in rfs.iter().zip(segments.iter()) {
@@ -91,9 +90,9 @@ impl SortSolution {
     pub fn run_compare<S: StartEnd + Copy + Default>(segments: &[S]) {
         println!("validation start");
         let mut data_0 = segments.to_vec();
-        data_0.par_sort_by_two_keys(|s| s.start().x, |s| s.start().y);
+        data_0.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
         let mut data_1 = segments.to_vec();
-        data_1.sort_by_two_keys(|s| s.start().x, |s| s.start().y);
+        data_1.sort_by_two_keys(false, |s| s.start().x, |s| s.start().y);
         let mut data_2 = segments.to_vec();
         data_2.par_sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
         if let Some(index) = compare_by_start(&data_1, &data_2) {

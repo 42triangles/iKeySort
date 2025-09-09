@@ -1,9 +1,10 @@
 #[cfg(feature = "allow_multithreading")]
-pub mod parallel;
-pub mod serial;
-pub mod bin_layout;
-pub mod key;
-mod mapper;
-mod spread;
-mod min_max;
+mod parallel;
+mod serial;
+mod bin_layout;
 mod log2;
+mod mapper;
+mod min_max;
+mod spread;
+pub mod key;
+pub mod key_sort;

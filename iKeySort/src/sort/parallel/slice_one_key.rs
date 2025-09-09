@@ -1,12 +1,12 @@
-use rayon::prelude::*;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::fragment::Fragment;
 use crate::sort::parallel::fragmentation::Fragmentation;
 use crate::sort::parallel::presort::PreSort;
-use crate::sort::serial::slice_one_key::{OneKeyBinSortSerial, OneKeyBufferBinSortSerial};
+use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
+use rayon::prelude::*;
 
-pub trait OneKeyBinSortParallel<T> {
+pub(crate) trait OneKeyBinSortParallel<T> {
     fn par_sort_by_one_key<K: SortKey, F: KeyFn<T, K>>(&mut self, key: F);
 }
 
@@ -17,9 +17,15 @@ impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
             return;
         }
 
+        #[cfg(debug_assertions)]
+        const MIN_PAR_LEN: usize = 64_000;
+
+        #[cfg(not(debug_assertions))]
+        const MIN_PAR_LEN: usize = 0;
+
         let cpu = CPUCount::count();
-        if cpu == 1 {
-            self.sort_by_one_key(key);
+        if cpu == 1 || self.len() < MIN_PAR_LEN {
+            self.ser_sort_by_one_key(key);
             return;
         }
 

@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
-use crate::sort::serial::slice_one_key::OneKeyBufferBinSortSerial;
+use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 
 impl Mapper {
     #[inline]

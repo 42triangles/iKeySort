@@ -2,7 +2,7 @@ use core::cmp::Ordering;
 use core::mem::MaybeUninit;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
-use crate::sort::serial::slice_two_keys::TwoKeysBufferBinSortSerial;
+use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 
 impl Mapper {
     #[inline]
