@@ -59,7 +59,7 @@ where
         F1: KeyFn<T, K>,
         F2: KeyFn<T, K>,
     {
-        self.slice
-            .sort_by_two_keys_and_buffer(self.buffer, key1, key2);
+        self.src
+            .sort_by_two_keys_and_uninit_buffer(self.buf, key1, key2);
     }
 }

@@ -1,5 +1,5 @@
-use std::mem::MaybeUninit;
 use crate::sort::parallel::fragment::Fragment;
+use std::mem::MaybeUninit;
 
 pub(super) trait Fragmentation<T> {
     fn fragment_by_count<'a>(
@@ -43,8 +43,8 @@ impl<T> Fragmentation<T> for [T] {
 
             frags.push(Fragment {
                 base,
-                slice: left_src,
-                buffer: left_buf,
+                src: left_src,
+                buf: left_buf,
             });
 
             src = right_src;
@@ -53,11 +53,7 @@ impl<T> Fragmentation<T> for [T] {
             base += step_len;
         }
 
-        frags.push(Fragment {
-            base,
-            slice: src,
-            buffer: buf,
-        });
+        frags.push(Fragment { base, src, buf });
 
         frags
     }
@@ -86,8 +82,8 @@ impl<T> Fragmentation<T> for [T] {
 
             frags.push(Fragment {
                 base,
-                slice: left_src,
-                buffer: left_buf,
+                src: left_src,
+                buf: left_buf,
             });
 
             src = right_src;
@@ -97,11 +93,7 @@ impl<T> Fragmentation<T> for [T] {
         }
 
         if !src.is_empty() {
-            frags.push(Fragment {
-                base,
-                slice: src,
-                buffer: buf,
-            });
+            frags.push(Fragment { base, src, buf });
         }
 
         frags

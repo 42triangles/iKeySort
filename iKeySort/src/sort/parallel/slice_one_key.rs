@@ -29,8 +29,8 @@ impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
             return;
         }
 
-        if let Some((marks, mut buffer)) = self.par_pre_sort(cpu, key) {
-            self.fragment_by_marks(&mut buffer, &marks)
+        if let Some((marks, mut buf)) = self.par_pre_sort(cpu, key) {
+            self.fragment_by_marks(&mut buf, &marks)
                 .par_iter_mut()
                 .for_each(|f| f.sort_by_one_key(key));
         }
@@ -47,6 +47,8 @@ where
         K: SortKey,
         F: KeyFn<T, K>,
     {
-        self.slice.sort_by_one_key_and_buffer(self.buffer, key);
+        self.src.sort_by_one_key_and_uninit_buffer(self.buf, key);
     }
 }
+
+

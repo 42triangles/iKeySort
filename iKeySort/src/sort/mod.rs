@@ -6,5 +6,6 @@ mod log2;
 mod mapper;
 mod min_max;
 mod spread;
+mod buffer;
 pub mod key;
 pub mod key_sort;

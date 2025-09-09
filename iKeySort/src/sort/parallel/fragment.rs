@@ -6,8 +6,8 @@ use std::ops::Range;
 
 pub(super) struct Fragment<'a, T> {
     pub(super) base: usize,
-    pub(super) slice: &'a mut [T],
-    pub(super) buffer: &'a mut [MaybeUninit<T>],
+    pub(super) src: &'a mut [T],
+    pub(super) buf: &'a mut [MaybeUninit<T>],
 }
 
 pub(super) struct IdRange {
@@ -26,16 +26,16 @@ where
         F: KeyFn<T, K>,
     {
         let mut mapper = Mapper::new(layout.count());
-        for a in self.slice.iter() {
+        for a in self.src.iter() {
             mapper.inc_bin_count(layout.index(key(a)));
         }
 
         mapper.init_indices();
 
-        for val in self.slice.iter() {
+        for val in self.src.iter() {
             let index = mapper.next_index(layout.index(key(val)));
             unsafe {
-                self.buffer.get_unchecked_mut(index).write(*val);
+                self.buf.get_unchecked_mut(index).write(*val);
             }
         }
 

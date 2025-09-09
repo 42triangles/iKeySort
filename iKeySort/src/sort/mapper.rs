@@ -1,6 +1,6 @@
+use crate::sort::bin_layout::MAX_BINS_COUNT;
 use core::ops::Range;
 use core::slice::Iter;
-use crate::sort::bin_layout::MAX_BINS_COUNT;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct Chunk {
@@ -14,7 +14,6 @@ pub struct Mapper {
 }
 
 impl Mapper {
-
     #[inline(always)]
     pub(crate) fn new(count: usize) -> Self {
         debug_assert!(count <= MAX_BINS_COUNT);
@@ -54,14 +53,9 @@ impl Mapper {
 
 impl Chunk {
     #[inline(always)]
-    pub(crate) fn count(&self) -> usize {
-        self.count
-    }
-
-    #[inline(always)]
     pub(crate) fn as_range(&self) -> Range<usize> {
         let end = self.index;
-        let start = end - self.count;
+        let start = self.index - self.count;
         start..end
     }
 }

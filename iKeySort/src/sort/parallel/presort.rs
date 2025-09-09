@@ -8,6 +8,7 @@ use rayon::iter::ParallelIterator;
 use std::mem::MaybeUninit;
 use std::ops::Range;
 use std::ptr;
+use crate::sort::buffer::MaybeUninitInit;
 
 pub(super) trait PreSort<T> {
     fn par_pre_sort<K: SortKey, F: KeyFn<T, K>>(
@@ -43,10 +44,8 @@ impl<T: Copy + Send + Sync> PreSort<T> for [T] {
 
         let groups = layout.par_spread(&mut fragments, key);
 
-        // at this time buffer contains semi sorted segments
-
-        let src =
-            unsafe { std::slice::from_raw_parts_mut(buffer.as_mut_ptr() as *mut T, buffer.len()) };
+        // by this time the buffer contains semi sorted segments and should be fully initialized
+        let src = buffer.assume_init_slice_mut();
 
         let marks = copy_groups(self, src, groups);
 
@@ -125,10 +124,12 @@ fn copy_groups<T>(mut dst: &mut [T], src: &[T], mut groups: Vec<Vec<Range<usize>
 #[inline]
 fn copy_ranges<T>(dst: &mut [T], src: &[T], ranges: &[Range<usize>]) -> usize {
     let mut offset = 0;
+    let dst_base = dst.as_mut_ptr();
+    let src_base = src.as_ptr();
     for range in ranges.iter() {
         unsafe {
-            let dst_ptr = dst.as_mut_ptr().add(offset);
-            let src_ptr = src.as_ptr().add(range.start);
+            let dst_ptr = dst_base.add(offset);
+            let src_ptr = src_base.add(range.start);
             ptr::copy_nonoverlapping(src_ptr, dst_ptr, range.len());
         }
 
