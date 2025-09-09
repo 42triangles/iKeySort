@@ -28,7 +28,6 @@ impl Mapper {
                             *dst = *val;
                         }
                     }
-                    continue;
                 }
                 2..TINY_SORT_MAX => {
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };

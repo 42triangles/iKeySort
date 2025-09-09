@@ -18,7 +18,7 @@ fn main() {
 
 #[cfg(debug_assertions)]
 fn debug_run() {
-    exp::checkerboard::CheckerboardTest::new(10000).run_custom();
+    exp::checkerboard::CheckerboardTest::new(10).run_custom();
 }
 
 #[cfg(not(debug_assertions))]

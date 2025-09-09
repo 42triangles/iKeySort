@@ -19,7 +19,7 @@ impl Mapper {
         // if `copy_to_src` is true
         // must copy `src` to `buf`, since the result array is in the buffer
 
-        for chunk in self.chunks[..self.count].iter() {
+        for chunk in self.iter() {
             let range = chunk.as_range();
             match range.len() {
                 0..=1 => {
@@ -30,7 +30,6 @@ impl Mapper {
                             *dst = *val;
                         }
                     }
-                    continue;
                 }
                 2..TINY_SORT_MAX => {
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
