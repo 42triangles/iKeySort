@@ -1,6 +1,8 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
+
+#[cfg(feature = "allow_multithreading")]
 use core::mem::MaybeUninit;
 
 pub(crate) trait TwoKeysBinSortSerial<T> {
@@ -23,6 +25,7 @@ pub(crate) trait TwoKeysBinSortSerial<T> {
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>;
 
+    #[cfg(feature = "allow_multithreading")]
     fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
         buffer: &mut [MaybeUninit<T>],
@@ -72,6 +75,7 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
         }
     }
 
+    #[cfg(feature = "allow_multithreading")]
     #[inline]
     fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
@@ -96,6 +100,7 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
 #[cfg(test)]
 mod tests {
     use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_0() {

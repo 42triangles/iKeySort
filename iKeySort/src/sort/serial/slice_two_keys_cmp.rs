@@ -1,6 +1,8 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
+
+#[cfg(feature = "allow_multithreading")]
 use core::mem::MaybeUninit;
 
 pub(crate) trait TwoKeysBinSortCmpSerial<T> {
@@ -26,6 +28,7 @@ pub(crate) trait TwoKeysBinSortCmpSerial<T> {
         F2: KeyFn<T, K2>,
         F3: CmpFn<T>;
 
+    #[cfg(feature = "allow_multithreading")]
     fn sort_by_two_keys_and_uninit_buffer_then_by<K1, K2, F1, F2, F3>(
         &mut self,
         buffer: &mut [MaybeUninit<T>],
@@ -87,6 +90,7 @@ impl<T: Copy> TwoKeysBinSortCmpSerial<T> for [T] {
         }
     }
 
+    #[cfg(feature = "allow_multithreading")]
     #[inline]
     fn sort_by_two_keys_and_uninit_buffer_then_by<K1, K2, F1, F2, F3>(
         &mut self,
@@ -113,6 +117,7 @@ impl<T: Copy> TwoKeysBinSortCmpSerial<T> for [T] {
 #[cfg(test)]
 mod tests {
     use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_0() {

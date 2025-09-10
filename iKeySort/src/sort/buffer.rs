@@ -1,6 +1,6 @@
-use std::mem::MaybeUninit;
-use std::ops::Range;
-use std::{ptr, slice};
+use core::mem::MaybeUninit;
+use core::ops::Range;
+use core::{ptr, slice};
 
 pub(crate) trait MaybeUninitInit<T> {
     fn assume_init_slice_mut(&mut self) -> &mut [T];

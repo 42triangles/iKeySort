@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 pub trait KeyFn<T, K>: Fn(&T) -> K + Copy {}
 impl<T, K, F: Fn(&T) -> K + Copy> KeyFn<T, K> for F {}

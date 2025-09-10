@@ -1,6 +1,8 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::buffer::CopyFromNotOverlap;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
+
+#[cfg(feature = "allow_multithreading")]
 use core::mem::MaybeUninit;
 
 pub(crate) trait OneKeyBinSortCmpSerial<T> {
@@ -21,6 +23,7 @@ pub(crate) trait OneKeyBinSortCmpSerial<T> {
         F1: KeyFn<T, K>,
         F2: CmpFn<T>;
 
+    #[cfg(feature = "allow_multithreading")]
     fn sort_by_one_key_and_uninit_buffer_then_by<K, F1, F2>(
         &mut self,
         buffer: &mut [MaybeUninit<T>],
@@ -70,6 +73,7 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
         }
     }
 
+    #[cfg(feature = "allow_multithreading")]
     #[inline]
     fn sort_by_one_key_and_uninit_buffer_then_by<K, F1, F2>(
         &mut self,
@@ -93,6 +97,7 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
 #[cfg(test)]
 mod tests {
     use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
+    use alloc::vec::Vec;
 
     #[test]
     fn test_0() {
