@@ -1,5 +1,5 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{CopyFromNotOverlap, MaybeUninitInit};
+use crate::sort::buffer::MaybeUninitInit;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
@@ -43,11 +43,9 @@ impl<K: SortKey> BinLayout<K> {
         let init_buffer = buf.assume_init_slice_mut();
 
         if self.bin_width_is_one() {
-            // all elements inside bins have the same key
-            init_buffer.sort_unstable_by(compare);
-
-            // move all data from buffer to src
-            src.copy_from_not_overlap(init_buffer);
+            // all elements inside bins have the same key1
+            // continue sort elements by compare
+            mapper.sort_chunks_by(init_buffer, src, compare, true);
         } else {
             // start ping pong
             // invert src and buffer
@@ -73,11 +71,9 @@ impl<K: SortKey> BinLayout<K> {
         let mapper = self.spread_with_buffer(src, buf, key);
 
         if self.bin_width_is_one() {
-            // all elements inside bins have the same key
-            buf.sort_unstable_by(compare);
-            if copy_to_src {
-                src.copy_from_not_overlap(buf);
-            }
+            // all elements inside bins have the same key1
+            // continue sort elements by compare
+            mapper.sort_chunks_by(buf, src, compare, copy_to_src);
         } else {
             // continue ping pong
             // invert src and buf

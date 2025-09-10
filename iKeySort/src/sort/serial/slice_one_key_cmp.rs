@@ -89,3 +89,73 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
+
+    #[test]
+    fn test_0() {
+        let mut org: Vec<_> = reversed_2d_array(2);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    #[test]
+    fn test_1() {
+        let mut org: Vec<_> = reversed_2d_array(100_u64.isqrt() as usize);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    #[test]
+    fn test_2() {
+        let mut org: Vec<_> = reversed_2d_array(1000_u64.isqrt() as usize);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    #[test]
+    fn test_3() {
+        let mut org: Vec<_> = reversed_2d_array(10_000_u64.isqrt() as usize);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    #[test]
+    fn test_4() {
+        let mut org: Vec<_> = reversed_2d_array(100_000_u64.isqrt() as usize);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    #[test]
+    fn test_5() {
+        let mut org: Vec<_> = reversed_2d_array(1000_000_u64.isqrt() as usize);
+        let mut arr = org.clone();
+        arr.ser_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    fn reversed_2d_array(count: usize) -> Vec<(i32, i32)> {
+        let mut arr = Vec::with_capacity(count * count);
+        for x in (0..count as i32).rev() {
+            for y in (0..count as i32).rev() {
+                arr.push((x, y))
+            }
+        }
+
+        arr
+    }
+}
