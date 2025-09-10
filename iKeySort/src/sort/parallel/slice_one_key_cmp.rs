@@ -55,3 +55,57 @@ where
         self.src.sort_by_one_key_and_uninit_buffer_then_by(self.buf, key, compare);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::sort::parallel::slice_one_key_cmp::OneKeyBinSortCmpParallel;
+
+    #[test]
+    fn test_0() {
+        test(2);
+    }
+
+    #[test]
+    fn test_1() {
+        test(10);
+    }
+
+    #[test]
+    fn test_2() {
+        test(30);
+    }
+
+    #[test]
+    fn test_3() {
+        test(100);
+    }
+
+    #[test]
+    fn test_4() {
+        test(300);
+    }
+
+    #[test]
+    fn test_5() {
+        test(1000);
+    }
+
+    fn test(count: usize) {
+        let mut org: Vec<_> = reversed_2d_array(count);
+        let mut arr = org.clone();
+        arr.par_sort_by_one_key_then_by(|a| a.0, |a, b| a.1.cmp(&b.1));
+        org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        assert_eq!(arr, org);
+    }
+
+    fn reversed_2d_array(count: usize) -> Vec<(i32, i32)> {
+        let mut arr = Vec::with_capacity(count * count);
+        for x in (0..count as i32).rev() {
+            for y in (0..count as i32).rev() {
+                arr.push((x, y))
+            }
+        }
+
+        arr
+    }
+}

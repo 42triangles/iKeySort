@@ -28,6 +28,7 @@ impl<T> Fragmentation<T> for [T] {
             (self.len(), 1)
         } else {
             let step_len = self.len().div_ceil(count);
+            let count = self.len().div_ceil(step_len);
             (count, step_len)
         };
 

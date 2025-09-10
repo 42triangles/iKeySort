@@ -45,3 +45,46 @@ where
         self.src.sort_by_one_key_and_uninit_buffer(self.buf, key);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
+
+    #[test]
+    fn test_0() {
+        test(10);
+    }
+
+    #[test]
+    fn test_1() {
+        test(100);
+    }
+
+    #[test]
+    fn test_2() {
+        test(1_000);
+    }
+
+    #[test]
+    fn test_3() {
+        test(10_000);
+    }
+
+    #[test]
+    fn test_4() {
+        test(100_000);
+    }
+
+    #[test]
+    fn test_5() {
+        test(1000_000);
+    }
+
+    fn test(count: usize) {
+        let mut org: Vec<_> = (0..count).rev().collect();
+        let mut arr = org.clone();
+        arr.par_sort_by_one_key(|&a| a);
+        org.sort_unstable();
+        assert_eq!(arr, org);
+    }
+}

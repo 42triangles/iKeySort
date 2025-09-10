@@ -51,59 +51,44 @@ impl<T: Copy> OneKeyBinSortSerial<T> for [T] {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 
     #[test]
     fn test_0() {
-        let mut arr = [9, 6, 4, 2, 6];
-        arr.ser_sort_by_one_key(|&a|a);
-        assert_eq!(arr, [2, 4, 6, 6, 9]);
+        test(10);
     }
 
     #[test]
     fn test_1() {
-        let mut org: Vec<_> = (0..100).rev().collect();
-        let mut arr = org.clone();
-        arr.ser_sort_by_one_key(|&a|a);
-        org.sort_unstable();
-        assert_eq!(arr, org);
+        test(100);
     }
 
     #[test]
     fn test_2() {
-        let mut org: Vec<_> = (0..1000).rev().collect();
-        let mut arr = org.clone();
-        arr.ser_sort_by_one_key(|&a|a);
-        org.sort_unstable();
-        assert_eq!(arr, org);
+        test(1_000);
     }
 
     #[test]
     fn test_3() {
-        let mut org: Vec<_> = (0..10_000).rev().collect();
-        let mut arr = org.clone();
-        arr.ser_sort_by_one_key(|&a|a);
-        org.sort_unstable();
-        assert_eq!(arr, org);
+        test(10_000);
     }
 
     #[test]
     fn test_4() {
-        let mut org: Vec<_> = (0..100_000).rev().collect();
-        let mut arr = org.clone();
-        arr.ser_sort_by_one_key(|&a|a);
-        org.sort_unstable();
-        assert_eq!(arr, org);
+        test(100_000);
     }
 
     #[test]
     fn test_5() {
-        let mut org: Vec<_> = (0..1000_000).rev().collect();
+        test(1000_000);
+    }
+
+    fn test(count: usize) {
+        let mut org: Vec<_> = (0..count).rev().collect();
         let mut arr = org.clone();
-        arr.ser_sort_by_one_key(|&a|a);
+        arr.ser_sort_by_one_key(|&a| a);
         org.sort_unstable();
         assert_eq!(arr, org);
     }
