@@ -7,7 +7,7 @@ pub(super) trait ParMinMax<T> {
     where
         K: Copy + Ord + Send + Sync,
         T: Copy + Send + Sync,
-        F: KeyFn<T, K>;
+        F: KeyFn<T, K> + Send + Sync;
 }
 
 impl<T> ParMinMax<T> for [T] {
@@ -16,7 +16,7 @@ impl<T> ParMinMax<T> for [T] {
     where
         K: Copy + Ord + Send + Sync,
         T: Copy + Send + Sync,
-        F: KeyFn<T, K>,
+        F: KeyFn<T, K> + Send + Sync,
     {
         debug_assert!(!self.is_empty());
         let first_val = self.first().unwrap();

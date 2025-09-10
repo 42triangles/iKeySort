@@ -3,30 +3,30 @@ use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::fragment::Fragment;
 use crate::sort::parallel::fragmentation::Fragmentation;
 use crate::sort::parallel::presort::PreSort;
+use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 use rayon::prelude::*;
-use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
-
 
 pub(crate) trait TwoKeysBinSortParallel<T> {
-    fn par_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    );
+    fn par_sort_by_two_keys<K, F1, F2>(&mut self, key1: F1, key2: F2)
+    where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: KeyFn<T, K> + Send + Sync;
 }
 
 impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
-    fn par_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    ) {
+    fn par_sort_by_two_keys<K, F1, F2>(&mut self, key1: F1, key2: F2)
+    where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: KeyFn<T, K> + Send + Sync,
+    {
         if self.is_empty() {
             return;
         }
 
-        let cpu =if let Some(count) = CPUCount::should_parallel(self.len()) {
+        let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
             self.ser_sort_by_two_keys(key1, key2);

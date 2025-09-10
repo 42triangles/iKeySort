@@ -53,7 +53,7 @@ impl<K1: SortKey> BinLayout<K1> {
         if self.bin_width_is_one() {
             // all elements inside bins have the same key1
             // continue sort elements inside bins by key2
-            mapper.sort_chunks_by_one_key_then_by(init_buffer, src, key2, compare,true);
+            mapper.sort_chunks_by_one_key_then_by(init_buffer, src, key2, compare, true);
         } else {
             mapper.sort_chunks_by_two_keys_then_by(init_buffer, src, key1, key2, compare, true);
         }
@@ -73,7 +73,7 @@ impl<K1: SortKey> BinLayout<K1> {
         K2: SortKey,
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>,
-        F3: CmpFn<T>
+        F3: CmpFn<T>,
     {
         debug_assert_eq!(src.len(), buf.len());
 

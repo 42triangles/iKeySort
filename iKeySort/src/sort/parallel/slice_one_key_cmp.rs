@@ -9,18 +9,18 @@ use rayon::prelude::*;
 pub(crate) trait OneKeyBinSortCmpParallel<T> {
     fn par_sort_by_one_key_then_by<K, F1, F2>(&mut self, key: F1, compare: F2)
     where
-        K: SortKey,
-        F1: KeyFn<T, K>,
-        F2: CmpFn<T>;
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync;
 }
 
 impl<T: Copy + Send + Sync> OneKeyBinSortCmpParallel<T> for [T] {
     #[inline]
     fn par_sort_by_one_key_then_by<K, F1, F2>(&mut self, key: F1, compare: F2)
     where
-        K: SortKey,
-        F1: KeyFn<T, K>,
-        F2: CmpFn<T>,
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync,
     {
         if self.is_empty() {
             return;

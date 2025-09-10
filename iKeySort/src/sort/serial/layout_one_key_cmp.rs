@@ -6,12 +6,8 @@ use core::mem::MaybeUninit;
 
 impl<K: SortKey> BinLayout<K> {
     #[inline]
-    pub(super) fn sort_by_one_key_then_by<T, F1, F2>(
-        &self,
-        slice: &mut [T],
-        key: F1,
-        compare: F2,
-    ) where
+    pub(super) fn sort_by_one_key_then_by<T, F1, F2>(&self, slice: &mut [T], key: F1, compare: F2)
+    where
         T: Copy,
         F1: KeyFn<T, K>,
         F2: CmpFn<T>,

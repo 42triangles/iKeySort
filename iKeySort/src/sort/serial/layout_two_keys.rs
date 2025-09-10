@@ -6,16 +6,12 @@ use core::mem::MaybeUninit;
 
 impl<K1: SortKey> BinLayout<K1> {
     #[inline]
-    pub(super) fn sort_by_two_keys<T, K2, F1, F2>(
-        &self,
-        src: &mut [T],
-        key1: F1,
-        key2: F2,
-    ) where
+    pub(super) fn sort_by_two_keys<T, K2, F1, F2>(&self, src: &mut [T], key1: F1, key2: F2)
+    where
         T: Copy,
         K2: SortKey,
         F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>
+        F2: KeyFn<T, K2>,
     {
         let mut buf: Vec<MaybeUninit<T>> = Vec::with_capacity(src.len());
         unsafe {
@@ -35,7 +31,7 @@ impl<K1: SortKey> BinLayout<K1> {
         T: Copy,
         K2: SortKey,
         F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>
+        F2: KeyFn<T, K2>,
     {
         debug_assert_eq!(src.len(), buf.len());
 
@@ -67,7 +63,7 @@ impl<K1: SortKey> BinLayout<K1> {
         T: Copy,
         K2: SortKey,
         F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>
+        F2: KeyFn<T, K2>,
     {
         debug_assert_eq!(src.len(), buf.len());
 

@@ -26,5 +26,4 @@ mod tests {
         assert_eq!(4usize.ilog2_ceil(), 2);
         assert_eq!(5usize.ilog2_ceil(), 3);
     }
-
 }

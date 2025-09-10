@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
-pub trait KeyFn<T, K>: Fn(&T) -> K + Send + Sync + Copy {}
-impl<T, K, F: Fn(&T) -> K + Send + Sync + Copy> KeyFn<T, K> for F {}
+pub trait KeyFn<T, K>: Fn(&T) -> K + Copy {}
+impl<T, K, F: Fn(&T) -> K + Copy> KeyFn<T, K> for F {}
 
-pub trait CmpFn<T>: Fn(&T, &T) -> Ordering + Send + Sync + Copy {}
-impl<T, F: Fn(&T, &T) -> Ordering + Send + Sync + Copy> CmpFn<T> for F {}
+pub trait CmpFn<T>: Fn(&T, &T) -> Ordering + Copy {}
+impl<T, F: Fn(&T, &T) -> Ordering + Copy> CmpFn<T> for F {}
 
-pub trait SortKey: Copy + Ord + Sync + Send {
+pub trait SortKey: Copy + Ord {
     fn difference(self, other: Self) -> usize;
 }
 

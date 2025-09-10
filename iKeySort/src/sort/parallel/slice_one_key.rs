@@ -7,17 +7,24 @@ use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 use rayon::prelude::*;
 
 pub(crate) trait OneKeyBinSortParallel<T> {
-    fn par_sort_by_one_key<K: SortKey, F: KeyFn<T, K>>(&mut self, key: F);
+    fn par_sort_by_one_key<K, F>(&mut self, key: F)
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync;
 }
 
 impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
     #[inline]
-    fn par_sort_by_one_key<K: SortKey, F: KeyFn<T, K>>(&mut self, key: F) {
+    fn par_sort_by_one_key<K, F>(&mut self, key: F)
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
+    {
         if self.is_empty() {
             return;
         }
 
-        let cpu =if let Some(count) = CPUCount::should_parallel(self.len()) {
+        let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
             self.ser_sort_by_one_key(key);

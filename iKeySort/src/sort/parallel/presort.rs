@@ -1,30 +1,37 @@
 use crate::sort::bin_layout::{BinLayout, MAX_BINS_COUNT};
+use crate::sort::buffer::MaybeUninitInit;
 use crate::sort::key::{KeyFn, SortKey};
-use crate::sort::parallel::par_min_max::ParMinMax;
 use crate::sort::parallel::fragment::{Fragment, IdRange};
 use crate::sort::parallel::fragmentation::Fragmentation;
+use crate::sort::parallel::par_min_max::ParMinMax;
 use rayon::iter::IntoParallelRefMutIterator;
 use rayon::iter::ParallelIterator;
 use std::mem::MaybeUninit;
 use std::ops::Range;
 use std::ptr;
-use crate::sort::buffer::MaybeUninitInit;
 
 pub(super) trait PreSort<T> {
-    fn par_pre_sort<K: SortKey, F: KeyFn<T, K>>(
+    fn par_pre_sort<K, F>(
         &mut self,
         cpu: usize,
         key: F,
-    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)>;
+    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)>
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync;
 }
 
 impl<T: Copy + Send + Sync> PreSort<T> for [T] {
     #[inline]
-    fn par_pre_sort<K: SortKey, F: KeyFn<T, K>>(
+    fn par_pre_sort<K, F>(
         &mut self,
         cpu: usize,
         key: F,
-    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)> {
+    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)>
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync
+    {
         let (min_key, max_key) = self.par_min_max(key);
 
         if min_key == max_key {
@@ -54,13 +61,12 @@ impl<T: Copy + Send + Sync> PreSort<T> for [T] {
     }
 }
 
-impl<K: SortKey> BinLayout<K> {
-
+impl<K: SortKey + Send + Sync> BinLayout<K> {
     #[inline]
     fn par_spread<T, F>(&self, fragments: &mut [Fragment<T>], key: F) -> Vec<Vec<Range<usize>>>
     where
         T: Copy + Send + Sync,
-        F: KeyFn<T, K>,
+        F: KeyFn<T, K> + Send + Sync,
     {
         let bins_count = self.count();
         let frags_count = fragments.len();

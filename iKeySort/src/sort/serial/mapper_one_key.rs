@@ -1,5 +1,6 @@
 use crate::sort::buffer::{CopyFromNotOverlap, CopyNotOverlapValue, DoubleRangeSlices};
 use crate::sort::key::{KeyFn, SortKey};
+use crate::sort::key_sort::BIN_SORT_MIN;
 use crate::sort::mapper::Mapper;
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 
@@ -12,7 +13,7 @@ impl Mapper {
         key: F,
         copy_to_src: bool,
     ) {
-        const TINY_SORT_MAX: usize = 64;
+        const TINY_SORT_MAX: usize = BIN_SORT_MIN;
 
         // if `copy_to_src` is true
         // must copy `src` to `buf`, since the result array is in the buffer
@@ -27,6 +28,7 @@ impl Mapper {
                     }
                 }
                 2..TINY_SORT_MAX => {
+                    // SAFETY: mapper ranges never overlap; (src, buf) are distinct buffers.
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
                     sub_slice.sort_unstable_by_key(|val| key(val));
                     if copy_to_src {

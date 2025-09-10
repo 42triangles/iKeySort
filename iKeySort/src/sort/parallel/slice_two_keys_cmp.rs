@@ -11,21 +11,21 @@ use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
 pub(crate) trait TwoKeysBinSortCmpParallel<T> {
     fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
     where
-        K1: SortKey,
-        K2: SortKey,
-        F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>,
-        F3: CmpFn<T>;
+        K1: SortKey + Send + Sync,
+        K2: SortKey + Send + Sync,
+        F1: KeyFn<T, K1> + Send + Sync,
+        F2: KeyFn<T, K2> + Send + Sync,
+        F3: CmpFn<T> + Send + Sync;
 }
 
 impl<T: Copy + Send + Sync> TwoKeysBinSortCmpParallel<T> for [T] {
     fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
     where
-        K1: SortKey,
-        K2: SortKey,
-        F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>,
-        F3: CmpFn<T>,
+        K1: SortKey + Send + Sync,
+        K2: SortKey + Send + Sync,
+        F1: KeyFn<T, K1> + Send + Sync,
+        F2: KeyFn<T, K2> + Send + Sync,
+        F3: CmpFn<T> + Send + Sync,
     {
         if self.is_empty() {
             return;

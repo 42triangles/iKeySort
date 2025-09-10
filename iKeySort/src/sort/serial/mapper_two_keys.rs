@@ -3,6 +3,7 @@ use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 use core::cmp::Ordering;
+use crate::sort::key_sort::BIN_SORT_MIN;
 
 impl Mapper {
     #[inline]
@@ -20,7 +21,7 @@ impl Mapper {
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>,
     {
-        const TINY_SORT_MAX: usize = 64;
+        const TINY_SORT_MAX: usize = BIN_SORT_MIN;
 
         // if `copy_to_src` is true
         // must copy `src` to `buf`, since the result array is in the buffer
@@ -35,6 +36,7 @@ impl Mapper {
                     }
                 }
                 2..TINY_SORT_MAX => {
+                    // SAFETY: mapper ranges never overlap; (src, buf) are distinct buffers.
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
                     sub_slice.sort_unstable_by(|a, b| {
                         let ordering = key1(a).cmp(&key1(b));
