@@ -5,7 +5,7 @@ use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
 
 impl Mapper {
     #[inline]
-    pub(crate) fn sort_chunks_by_two_keys_then_by<K, T, F1, F2, F3>(
+    pub(crate) fn sort_chunks_by_two_keys_then_by<K1, K2, T, F1, F2, F3>(
         &self,
         src: &mut [T],
         buf: &mut [T],
@@ -14,10 +14,11 @@ impl Mapper {
         compare: F3,
         copy_to_src: bool,
     ) where
-        K: SortKey,
+        K1: SortKey,
+        K2: SortKey,
         T: Copy,
-        F1: KeyFn<T, K>,
-        F2: KeyFn<T, K>,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>,
         F3: CmpFn<T>,
     {
         const TINY_SORT_MAX: usize = 64;

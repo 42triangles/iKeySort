@@ -6,14 +6,20 @@ use core::cmp::Ordering;
 
 impl Mapper {
     #[inline]
-    pub(crate) fn sort_chunks_by_two_keys<K: SortKey, T: Copy, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    pub(crate) fn sort_chunks_by_two_keys<K1, K2, T, F1, F2>(
         &self,
         src: &mut [T],
         buf: &mut [T],
         key1: F1,
         key2: F2,
         copy_to_src: bool,
-    ) {
+    ) where
+        T: Copy,
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>,
+    {
         const TINY_SORT_MAX: usize = 64;
 
         // if `copy_to_src` is true

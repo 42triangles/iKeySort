@@ -4,34 +4,45 @@ use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 use core::mem::MaybeUninit;
 
 pub(crate) trait TwoKeysBinSortSerial<T> {
-    fn ser_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    );
+    fn ser_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
+    where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>;
 
-    fn sort_by_two_keys_and_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         buf: &mut [T],
         key1: F1,
         key2: F2,
         copy_to_src: bool,
-    );
+    ) where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>;
 
-    fn sort_by_two_keys_and_uninit_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
         buffer: &mut [MaybeUninit<T>],
         key1: F1,
         key2: F2,
-    );
+    ) where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>;
 }
 
 impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
-    fn ser_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    ) {
+    fn ser_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
+    where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
             layout.sort_by_two_keys(self, key1, key2);
         } else {
@@ -41,13 +52,18 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
     }
 
     #[inline]
-    fn sort_by_two_keys_and_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         buffer: &mut [T],
         key1: F1,
         key2: F2,
         copy_to_src: bool,
-    ) {
+    ) where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
             layout.sort_by_two_keys_and_buffer(self, buffer, key1, key2, copy_to_src);
         } else {
@@ -57,12 +73,17 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
     }
 
     #[inline]
-    fn sort_by_two_keys_and_uninit_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
         buf: &mut [MaybeUninit<T>],
         key1: F1,
         key2: F2,
-    ) {
+    ) where
+        K1: SortKey,
+        K2: SortKey,
+        F1: KeyFn<T, K1>,
+        F2: KeyFn<T, K2>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
             layout.sort_by_two_keys_and_uninit_buffer(self, buf, key1, key2);
         } else {
