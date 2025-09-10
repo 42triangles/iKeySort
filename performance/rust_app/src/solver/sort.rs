@@ -11,7 +11,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
@@ -25,7 +25,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.sort_by(|s0, s1| s0.cmp_by_start(s1));
@@ -39,7 +39,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.par_sort_unstable_by(|s0, s1| s0.cmp_by_start(s1));
@@ -53,7 +53,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.par_sort_by(|s0, s1| s0.cmp_by_start(s1));
@@ -67,7 +67,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.sort_by_two_keys(false, |s| s.start().x, |s| s.start().y);
@@ -81,7 +81,7 @@ impl SortSolution {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
-        let n = 1000_000 / segments.len().max(1);
+        let n = Self::repeat_count(segments.len());
         for _ in 0..n {
             data.copy_from_slice(&segments);
             data.sort_by_two_keys(true, |s| s.start().x, |s| s.start().y);
@@ -132,6 +132,11 @@ impl SortSolution {
             println!("not valid par sort index: {}", index);
         }
     }
+
+    fn repeat_count(len: usize) -> usize {
+        (100_000 / len).max(1)
+    }
+
 }
 
 fn compare_by_start<S: StartEnd>(data_1: &[S], data_2: &[S]) -> Option<usize> {

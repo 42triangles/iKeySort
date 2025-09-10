@@ -3,9 +3,10 @@ use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::fragment::Fragment;
 use crate::sort::parallel::fragmentation::Fragmentation;
 use crate::sort::parallel::presort::PreSort;
-use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 use rayon::prelude::*;
+use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
+
 
 pub(crate) trait TwoKeysBinSortParallel<T> {
     fn par_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(

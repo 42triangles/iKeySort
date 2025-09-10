@@ -1,4 +1,4 @@
-use crate::sort::buffer::DoubleRangeSlices;
+use crate::sort::buffer::{CopyFromNotOverlap, CopyNotOverlapValue, DoubleRangeSlices};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
@@ -20,21 +20,17 @@ impl Mapper {
         for chunk in self.iter() {
             let range = chunk.as_range();
             match range.len() {
-                0..=1 => {
+                0 => continue,
+                1 => {
                     if copy_to_src {
-                        unsafe {
-                            let dst = buf.get_unchecked_mut(range.start);
-                            let val = src.get_unchecked(range.start);
-                            *dst = *val;
-                        }
+                        buf.copy_value_from(src, range.start);
                     }
                 }
                 2..TINY_SORT_MAX => {
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
                     sub_slice.sort_unstable_by_key(|val| key(val));
                     if copy_to_src {
-                        let sub_buffer = unsafe { buf.get_unchecked_mut(range) };
-                        sub_buffer.copy_from_slice(sub_slice);
+                        buf.copy_to_range_from_not_overlap(sub_slice, range);
                     }
                 }
                 _ => {

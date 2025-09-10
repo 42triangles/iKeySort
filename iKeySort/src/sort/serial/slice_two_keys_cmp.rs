@@ -1,73 +1,105 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::key::{KeyFn, SortKey};
-use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
+use crate::sort::key::{CmpFn, KeyFn, SortKey};
+use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
 use core::mem::MaybeUninit;
 
-pub(crate) trait TwoKeysBinSortSerial<T> {
-    fn ser_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    );
+pub(crate) trait TwoKeysBinSortCmpSerial<T> {
+    fn ser_sort_by_two_keys_then_by<K, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
+    where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>;
 
-    fn sort_by_two_keys_and_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_buffer_then_by<K, F1, F2, F3>(
         &mut self,
         buf: &mut [T],
         key1: F1,
         key2: F2,
+        compare: F3,
         copy_to_src: bool,
-    );
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>;
 
-    fn sort_by_two_keys_and_uninit_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_uninit_buffer_then_by<K, F1, F2, F3>(
         &mut self,
         buffer: &mut [MaybeUninit<T>],
         key1: F1,
         key2: F2,
-    );
+        compare: F3,
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>;
 }
 
-impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
-    fn ser_sort_by_two_keys<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
-        &mut self,
-        key1: F1,
-        key2: F2,
-    ) {
+impl<T: Copy> TwoKeysBinSortCmpSerial<T> for [T] {
+    fn ser_sort_by_two_keys_then_by<K, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
+    where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_two_keys(self, key1, key2);
+            layout.sort_by_two_keys_then_by(self, key1, key2, compare);
         } else {
-            // one bin with single key1 for all elements
-            self.ser_sort_by_one_key(key2);
+            // all bins already sorted by key1
+            self.ser_sort_by_one_key_then_by(key2, compare);
         };
     }
 
     #[inline]
-    fn sort_by_two_keys_and_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_buffer_then_by<K, F1, F2, F3>(
         &mut self,
         buffer: &mut [T],
         key1: F1,
         key2: F2,
+        compare: F3,
         copy_to_src: bool,
-    ) {
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_two_keys_and_buffer(self, buffer, key1, key2, copy_to_src);
+            layout.sort_by_two_keys_and_buffer_then_by(
+                self,
+                buffer,
+                key1,
+                key2,
+                compare,
+                copy_to_src,
+            );
         } else {
-            // one bin with single key1 for all elements
-            self.sort_by_one_key_and_buffer(buffer, key2, copy_to_src);
+            // already sorted by key1
+            self.sort_by_one_key_and_buffer_then_by(buffer, key2, compare, copy_to_src);
         }
     }
 
     #[inline]
-    fn sort_by_two_keys_and_uninit_buffer<K: SortKey, F1: KeyFn<T, K>, F2: KeyFn<T, K>>(
+    fn sort_by_two_keys_and_uninit_buffer_then_by<K, F1, F2, F3>(
         &mut self,
         buf: &mut [MaybeUninit<T>],
         key1: F1,
         key2: F2,
-    ) {
+        compare: F3,
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: KeyFn<T, K>,
+        F3: CmpFn<T>,
+    {
         if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_two_keys_and_uninit_buffer(self, buf, key1, key2);
+            layout.sort_by_two_keys_and_uninit_buffer_then_by(self, buf, key1, key2, compare);
         } else {
-            // one bin with single key1 for all elements
-            self.sort_by_one_key_and_uninit_buffer(buf, key2);
+            // all bins already sorted by key1
+            self.sort_by_one_key_and_uninit_buffer_then_by(buf, key2, compare);
         }
     }
 }
