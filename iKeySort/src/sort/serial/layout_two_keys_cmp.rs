@@ -1,14 +1,15 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::MaybeUninitInit;
+use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
 impl<K1: SortKey> BinLayout<K1> {
     #[inline]
-    pub(super) fn sort_by_two_keys_then_by<T, K2, F1, F2, F3>(
+    pub(super) fn sort_by_two_keys_then_by_and_uninit_buffer<T, K2, F1, F2, F3>(
         &self,
         src: &mut [T],
+        buf: &mut Vec<MaybeUninit<T>>,
         key1: F1,
         key2: F2,
         compare: F3,
@@ -19,29 +20,7 @@ impl<K1: SortKey> BinLayout<K1> {
         F2: KeyFn<T, K2>,
         F3: CmpFn<T>,
     {
-        let mut buf: Vec<MaybeUninit<T>> = Vec::with_capacity(src.len());
-        unsafe {
-            buf.set_len(src.len());
-        }
-        self.sort_by_two_keys_and_uninit_buffer_then_by(src, &mut buf, key1, key2, compare);
-    }
-
-    #[inline]
-    pub(super) fn sort_by_two_keys_and_uninit_buffer_then_by<T, K2, F1, F2, F3>(
-        &self,
-        src: &mut [T],
-        buf: &mut [MaybeUninit<T>],
-        key1: F1,
-        key2: F2,
-        compare: F3,
-    ) where
-        T: Copy,
-        K2: SortKey,
-        F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>,
-        F3: CmpFn<T>,
-    {
-        debug_assert_eq!(src.len(), buf.len());
+        buf.resize_to_new_len(src.len());
 
         let mapper = self.spread_with_uninit_buffer(src, buf, key1);
 
@@ -60,7 +39,7 @@ impl<K1: SortKey> BinLayout<K1> {
     }
 
     #[inline]
-    pub(super) fn sort_by_two_keys_and_buffer_then_by<T, K2, F1, F2, F3>(
+    pub(super) fn sort_by_two_keys_then_by_and_buffer<T, K2, F1, F2, F3>(
         &self,
         src: &mut [T],
         buf: &mut [T],

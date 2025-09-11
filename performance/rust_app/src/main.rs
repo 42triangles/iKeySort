@@ -32,6 +32,7 @@ fn release_run() {
         0 => test_0(count),
         1 => test_1(count),
         2 => test_2(count),
+        3 => test_3(count),
         _ => {
             panic!("No test found")
         }
@@ -51,4 +52,9 @@ fn test_1(n: usize) {
 #[allow(dead_code)]
 fn test_2(n: usize) {
     exp::circle::CircleTest::new(n).run_all();
+}
+
+#[allow(dead_code)]
+fn test_3(n: usize) {
+    exp::spiral::SpiralTest::new(n).run_all();
 }

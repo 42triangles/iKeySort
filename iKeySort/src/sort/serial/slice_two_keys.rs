@@ -1,19 +1,11 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
-
-#[cfg(feature = "allow_multithreading")]
+use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
 pub(crate) trait TwoKeysBinSortSerial<T> {
-    fn ser_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
-    where
-        K1: SortKey,
-        K2: SortKey,
-        F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>;
-
-    fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
+    fn ser_sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         buf: &mut [T],
         key1: F1,
@@ -25,10 +17,9 @@ pub(crate) trait TwoKeysBinSortSerial<T> {
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>;
 
-    #[cfg(feature = "allow_multithreading")]
-    fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
+    fn ser_sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
-        buffer: &mut [MaybeUninit<T>],
+        buf: &mut Vec<MaybeUninit<T>>,
         key1: F1,
         key2: F2,
     ) where
@@ -39,25 +30,10 @@ pub(crate) trait TwoKeysBinSortSerial<T> {
 }
 
 impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
-    fn ser_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
-    where
-        K1: SortKey,
-        K2: SortKey,
-        F1: KeyFn<T, K1>,
-        F2: KeyFn<T, K2>,
-    {
-        if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_two_keys(self, key1, key2);
-        } else {
-            // one bin with single key1 for all elements
-            self.ser_sort_by_one_key(key2);
-        };
-    }
-
     #[inline]
-    fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
+    fn ser_sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
-        buffer: &mut [T],
+        buf: &mut [T],
         key1: F1,
         key2: F2,
         copy_to_src: bool,
@@ -67,19 +43,19 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>,
     {
+        debug_assert_eq!(self.len(), buf.len());
         if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_two_keys_and_buffer(self, buffer, key1, key2, copy_to_src);
+            layout.sort_by_two_keys_and_buffer(self, buf, key1, key2, copy_to_src);
         } else {
             // one bin with single key1 for all elements
-            self.sort_by_one_key_and_buffer(buffer, key2, copy_to_src);
+            self.ser_sort_by_one_key_and_buffer(buf, key2, copy_to_src);
         }
     }
 
-    #[cfg(feature = "allow_multithreading")]
     #[inline]
-    fn sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
+    fn ser_sort_by_two_keys_and_uninit_buffer<K1, K2, F1, F2>(
         &mut self,
-        buf: &mut [MaybeUninit<T>],
+        buf: &mut Vec<MaybeUninit<T>>,
         key1: F1,
         key2: F2,
     ) where
@@ -92,7 +68,7 @@ impl<T: Copy> TwoKeysBinSortSerial<T> for [T] {
             layout.sort_by_two_keys_and_uninit_buffer(self, buf, key1, key2);
         } else {
             // one bin with single key1 for all elements
-            self.sort_by_one_key_and_uninit_buffer(buf, key2);
+            self.ser_sort_by_one_key_and_uninit_buffer(buf, key2);
         }
     }
 }
@@ -135,9 +111,9 @@ mod tests {
     fn test(count: usize) {
         let mut org: Vec<_> = reversed_2d_array(count);
         let mut arr = org.clone();
-        arr.ser_sort_by_two_keys(|a| a.0, |a| a.1);
+        arr.ser_sort_by_two_keys_and_uninit_buffer(&mut Vec::new(), |a| a.0, |a| a.1);
         org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
-        assert_eq!(arr, org);
+        assert!(arr == org);
     }
 
     fn reversed_2d_array(count: usize) -> Vec<(i32, i32)> {

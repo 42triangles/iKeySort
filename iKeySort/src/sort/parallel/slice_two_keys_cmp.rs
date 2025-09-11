@@ -1,16 +1,21 @@
+use crate::sort::bin_layout::BinLayout;
+use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
-use crate::sort::parallel::fragment::Fragment;
-use crate::sort::parallel::fragmentation::Fragmentation;
-use crate::sort::parallel::presort::PreSort;
-use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
-use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
-use rayon::prelude::*;
+use crate::sort::parallel::slice_one_key_cmp::OneKeyBinSortCmpParallel;
+use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
+use core::mem::MaybeUninit;
+use rayon::prelude::*;
 
 pub(crate) trait TwoKeysBinSortCmpParallel<T> {
-    fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
-    where
+    fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(
+        &mut self,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key1: F1,
+        key2: F2,
+        compare: F3,
+    ) where
         K1: SortKey + Send + Sync,
         K2: SortKey + Send + Sync,
         F1: KeyFn<T, K1> + Send + Sync,
@@ -19,8 +24,14 @@ pub(crate) trait TwoKeysBinSortCmpParallel<T> {
 }
 
 impl<T: Copy + Send + Sync> TwoKeysBinSortCmpParallel<T> for [T] {
-    fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(&mut self, key1: F1, key2: F2, compare: F3)
-    where
+    #[inline]
+    fn par_sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(
+        &mut self,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key1: F1,
+        key2: F2,
+        compare: F3,
+    ) where
         K1: SortKey + Send + Sync,
         K2: SortKey + Send + Sync,
         F1: KeyFn<T, K1> + Send + Sync,
@@ -31,25 +42,39 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortCmpParallel<T> for [T] {
             return;
         }
 
+        reusable_buffer.resize_to_new_len(self.len());
+
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
-            self.ser_sort_by_two_keys(key1, key2);
+            self.ser_sort_by_two_keys_then_by_and_uninit_buffer(
+                reusable_buffer,
+                key1,
+                key2,
+                compare,
+            );
             return;
         };
 
-        if let Some((marks, mut buffer)) = self.par_pre_sort(cpu, key1) {
-            self.fragment_by_marks(&mut buffer, &marks)
-                .par_iter_mut()
-                .for_each(|f| f.sort_by_two_keys_then_by(key1, key2, compare));
+        let layout = if let Some(layout) = BinLayout::with_cpu_count(cpu, self, key1) {
+            layout
         } else {
             // array is flat by key1
-            self.par_sort_by_one_key(key2)
-        }
+            // sort it by key2 and cmp
+            self.par_sort_by_one_key_then_by(reusable_buffer, key2, compare);
+            return;
+        };
+
+        let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key1);
+
+        let init_buf = reusable_buffer.assume_init_slice_mut();
+        self.fragment_by_marks(init_buf, &marks)
+            .par_iter_mut()
+            .for_each(|f| f.sort_by_two_keys_then_by(key1, key2, compare));
     }
 }
 
-impl<T> Fragment<'_, T>
+impl<T> SubSortFragment<'_, T>
 where
     T: Send + Copy,
 {
@@ -63,7 +88,7 @@ where
         F3: CmpFn<T>,
     {
         self.src
-            .sort_by_two_keys_and_uninit_buffer_then_by(self.buf, key1, key2, compare);
+            .ser_sort_by_two_keys_then_by_and_buffer(self.buf, key1, key2, compare, true);
     }
 }
 #[cfg(test)]
@@ -103,9 +128,9 @@ mod tests {
     fn test(count: usize) {
         let mut org: Vec<_> = reversed_2d_array(count);
         let mut arr = org.clone();
-        arr.par_sort_by_two_keys_then_by(|a| a.0, |a| a.1, |a, b| a.2.cmp(&b.2));
+        arr.par_sort_by_two_keys_then_by(&mut Vec::new(), |a| a.0, |a| a.1, |a, b| a.2.cmp(&b.2));
         org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
-        assert_eq!(arr, org);
+        assert!(arr == org);
     }
 
     fn reversed_2d_array(count: usize) -> Vec<(u32, i32, i32)> {

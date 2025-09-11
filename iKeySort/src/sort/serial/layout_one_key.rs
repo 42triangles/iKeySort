@@ -1,27 +1,18 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{CopyFromNotOverlap, MaybeUninitInit};
+use crate::sort::buffer::{CopyFromNotOverlap, MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
 impl<K: SortKey> BinLayout<K> {
     #[inline]
-    pub(super) fn sort_by_one_key<T: Copy, F: KeyFn<T, K>>(&self, slice: &mut [T], key: F) {
-        let mut buffer: Vec<MaybeUninit<T>> = Vec::with_capacity(slice.len());
-        unsafe {
-            buffer.set_len(slice.len());
-        }
-        self.sort_by_one_key_and_uninit_buffer(slice, &mut buffer, key);
-    }
-
-    #[inline]
     pub(super) fn sort_by_one_key_and_uninit_buffer<T: Copy, F: KeyFn<T, K>>(
         &self,
         src: &mut [T],
-        buf: &mut [MaybeUninit<T>],
+        buf: &mut Vec<MaybeUninit<T>>,
         key: F,
     ) {
-        debug_assert_eq!(src.len(), buf.len());
+        buf.resize_to_new_len(src.len());
 
         let mapper = self.spread_with_uninit_buffer(src, buf, key);
 
@@ -34,9 +25,7 @@ impl<K: SortKey> BinLayout<K> {
             // move all data from buffer to src
             src.copy_from_not_overlap(init_buffer);
         } else {
-            // start ping pong
-            // invert src and buffer
-            mapper.sort_chunks_by_one_key(init_buffer, src, key, true);
+            mapper.sort_chunks_by_one_key(src, init_buffer, key, true);
         }
     }
 
@@ -61,7 +50,7 @@ impl<K: SortKey> BinLayout<K> {
         } else {
             // continue ping pong
             // invert src and buf
-            mapper.sort_chunks_by_one_key(buf, src, key, !copy_to_src);
+            mapper.sort_chunks_by_one_key(src, buf, key, copy_to_src);
         }
     }
 }

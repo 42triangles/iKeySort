@@ -1,0 +1,186 @@
+use crate::sort::bin_layout::BIN_SORT_MIN;
+use crate::sort::key::{KeyFn, SortKey};
+use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
+use alloc::vec::Vec;
+use core::mem::MaybeUninit;
+
+#[cfg(not(feature = "allow_multithreading"))]
+pub trait OneKeySort<T> {
+    fn sort_by_one_key<K, F>(&mut self, parallel: bool, key: F)
+    where
+        K: SortKey,
+        F: KeyFn<T, K>;
+
+    fn sort_by_one_key_and_buffer<K, F>(
+        &mut self,
+        parallel: bool,
+        buffer: &mut Vec<MaybeUninit<T>>,
+        key: F,
+    ) where
+        K: SortKey,
+        F: KeyFn<T, K>;
+}
+
+#[cfg(feature = "allow_multithreading")]
+pub trait OneKeySort<T> {
+    fn sort_by_one_key<K, F>(&mut self, parallel: bool, key: F)
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync;
+
+    fn sort_by_one_key_and_buffer<K, F>(
+        &mut self,
+        parallel: bool,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key: F,
+    ) where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync;
+}
+
+#[cfg(not(feature = "allow_multithreading"))]
+impl<T: Copy> OneKeySort<T> for [T] {
+    #[inline]
+    fn sort_by_one_key<K, F>(&mut self, _: bool, key: F)
+    where
+        K: SortKey,
+        F: KeyFn<T, K>,
+    {
+        if self.len() < BIN_SORT_MIN {
+            self.sort_unstable_by_key(key);
+            return;
+        }
+        self.ser_sort_by_one_key_and_uninit_buffer(&mut Vec::new(), key);
+    }
+
+    #[inline]
+    fn sort_by_one_key_and_buffer<K: SortKey, F: KeyFn<T, K>>(
+        &mut self,
+        _: bool,
+        buffer: &mut Vec<MaybeUninit<T>>,
+        key: F,
+    ) {
+        if self.len() < BIN_SORT_MIN {
+            self.sort_unstable_by_key(key);
+            return;
+        }
+        self.ser_sort_by_one_key_and_uninit_buffer(buffer, key);
+    }
+}
+
+#[cfg(feature = "allow_multithreading")]
+impl<T> OneKeySort<T> for [T]
+where
+    T: Send + Sync + Copy,
+{
+    #[inline]
+    fn sort_by_one_key<K, F>(&mut self, parallel: bool, key: F)
+    where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
+    {
+        use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
+
+        if self.len() < BIN_SORT_MIN {
+            self.sort_unstable_by_key(key);
+            return;
+        }
+        let mut buffer = Vec::new();
+        if parallel {
+            self.par_sort_by_one_key(&mut buffer, key);
+        } else {
+            self.ser_sort_by_one_key_and_uninit_buffer(&mut buffer, key);
+        }
+    }
+
+    #[inline]
+    fn sort_by_one_key_and_buffer<K, F>(
+        &mut self,
+        parallel: bool,
+        buffer: &mut Vec<MaybeUninit<T>>,
+        key: F,
+    ) where
+        K: SortKey + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
+    {
+        use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
+
+        if self.len() < BIN_SORT_MIN {
+            self.sort_unstable_by_key(key);
+            return;
+        }
+        if parallel {
+            self.par_sort_by_one_key(buffer, key);
+        } else {
+            self.ser_sort_by_one_key_and_uninit_buffer(buffer, key);
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use alloc::vec::Vec;
+    use crate::sort::one_key::OneKeySort;
+
+    #[test]
+    fn test_0() {
+        test(10);
+    }
+
+    #[test]
+    fn test_1() {
+        test(34);
+    }
+
+    #[test]
+    fn test_2() {
+        test(1_000);
+    }
+
+    #[test]
+    fn test_3() {
+        test(5_000);
+    }
+
+    #[test]
+    fn test_4() {
+        test(100_000);
+    }
+
+    #[test]
+    fn test_5() {
+        test(1000_000);
+    }
+
+    fn test(count: usize) {
+        let mut org: Vec<_> = (0..count).rev().collect();
+        let mut arr1 = org.clone();
+        let mut arr2 = org.clone();
+        arr1.sort_by_one_key(true, |&a| a);
+        // arr2.sort_by_one_key(false, |&a| a);
+        org.sort_unstable();
+        assert!(arr1 == org);
+        // assert!(arr2 == org);
+    }
+
+    #[test]
+    fn test_custom() {
+        let mut org = vec![
+            54, 53, 52, 51,
+            44, 43, 42, 41,
+            34, 33, 32, 31,
+            24, 23, 22, 21,
+            54, 53, 52, 51,
+            64, 63, 62, 61,
+            74, 73, 72, 71,
+            84, 83, 82, 81,
+            94, 93, 92, 91,
+        ];
+        let mut arr1 = org.clone();
+        arr1.sort_by_one_key(true, |&a| a);
+        // arr2.sort_by_one_key(false, |&a| a);
+        org.sort_unstable();
+        assert!(arr1 == org);
+    }
+}

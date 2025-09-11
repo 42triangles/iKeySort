@@ -1,0 +1,144 @@
+use crate::sort::bin_layout::BIN_SORT_MIN;
+use crate::sort::key::{CmpFn, KeyFn, SortKey};
+use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
+use alloc::vec::Vec;
+use core::mem::MaybeUninit;
+
+#[cfg(not(feature = "allow_multithreading"))]
+pub trait OneKeyAndCmpSort<T> {
+    fn sort_by_one_key_then_by<K, F1, F2>(&mut self, parallel: bool, key: F1, compare: F2)
+    where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: CmpFn<T>;
+
+    fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
+        &mut self,
+        parallel: bool,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key: F1,
+        compare: F2,
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: CmpFn<T>;
+}
+
+#[cfg(feature = "allow_multithreading")]
+pub trait OneKeyAndCmpSort<T> {
+    fn sort_by_one_key_then_by<K, F1, F2>(&mut self, parallel: bool, key: F1, compare: F2)
+    where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync;
+
+    fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
+        &mut self,
+        parallel: bool,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key: F1,
+        compare: F2,
+    ) where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync;
+}
+
+#[cfg(not(feature = "allow_multithreading"))]
+impl<T: Copy> OneKeyAndCmpSort<T> for [T] {
+    #[inline]
+    fn sort_by_one_key_then_by<K, F1, F2>(&mut self, _: bool, key: F1, compare: F2)
+    where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: CmpFn<T>,
+    {
+        if self.len() < BIN_SORT_MIN {
+            sort_unstable_by_one_key_then_by(self, key, compare);
+            return;
+        }
+        self.ser_sort_by_one_key_then_by_and_uninit_buffer(&mut Vec::new(), key, compare);
+    }
+
+    #[inline]
+    fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
+        &mut self,
+        _: bool,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key: F1,
+        compare: F2,
+    ) where
+        K: SortKey,
+        F1: KeyFn<T, K>,
+        F2: CmpFn<T>,
+    {
+        if self.len() < BIN_SORT_MIN {
+            sort_unstable_by_one_key_then_by(self, key, compare);
+            return;
+        }
+        self.ser_sort_by_one_key_then_by_and_uninit_buffer(reusable_buffer, key, compare);
+    }
+}
+
+#[cfg(feature = "allow_multithreading")]
+impl<T> OneKeyAndCmpSort<T> for [T]
+where
+    T: Send + Sync + Copy,
+{
+    #[inline]
+    fn sort_by_one_key_then_by<K, F1, F2>(&mut self, parallel: bool, key: F1, compare: F2)
+    where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync,
+    {
+        use crate::sort::parallel::slice_one_key_cmp::OneKeyBinSortCmpParallel;
+
+        if self.len() < BIN_SORT_MIN {
+            sort_unstable_by_one_key_then_by(self, key, compare);
+            return;
+        }
+        let mut reusable_buffer = Vec::new();
+        if parallel {
+            self.par_sort_by_one_key_then_by(&mut reusable_buffer, key, compare);
+        } else {
+            self.ser_sort_by_one_key_then_by_and_uninit_buffer(&mut reusable_buffer, key, compare);
+        }
+    }
+
+    #[inline]
+    fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
+        &mut self,
+        parallel: bool,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key: F1,
+        compare: F2,
+    ) where
+        K: SortKey + Send + Sync,
+        F1: KeyFn<T, K> + Send + Sync,
+        F2: CmpFn<T> + Send + Sync,
+    {
+        use crate::sort::parallel::slice_one_key_cmp::OneKeyBinSortCmpParallel;
+
+        if self.len() < BIN_SORT_MIN {
+            sort_unstable_by_one_key_then_by(self, key, compare);
+            return;
+        }
+
+        if parallel {
+            self.par_sort_by_one_key_then_by(reusable_buffer, key, compare);
+        } else {
+            self.ser_sort_by_one_key_then_by_and_uninit_buffer(reusable_buffer, key, compare);
+        }
+    }
+}
+
+#[inline]
+pub(crate) fn sort_unstable_by_one_key_then_by<T, K, F1, F2>(slice: &mut [T], key: F1, compare: F2)
+where
+    K: SortKey,
+    F1: KeyFn<T, K>,
+    F2: CmpFn<T>,
+{
+    slice.sort_unstable_by(|a, b| key(a).cmp(&key(b)).then(compare(a, b)));
+}

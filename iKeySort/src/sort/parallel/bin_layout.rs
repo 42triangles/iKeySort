@@ -1,69 +1,91 @@
 use crate::sort::bin_layout::{BinLayout, MAX_BINS_COUNT};
 use crate::sort::buffer::MaybeUninitInit;
 use crate::sort::key::{KeyFn, SortKey};
-use crate::sort::parallel::fragment::{Fragment, IdRange};
-use crate::sort::parallel::fragmentation::Fragmentation;
-use crate::sort::parallel::par_min_max::ParMinMax;
-use rayon::iter::IntoParallelRefMutIterator;
+use crate::sort::parallel::pre_sort::{PreSortFragment, IdRange, FragmentationByCount};
 use rayon::iter::ParallelIterator;
-use std::mem::MaybeUninit;
-use std::ops::Range;
-use std::ptr;
+use rayon::iter::{IntoParallelRefIterator, IntoParallelRefMutIterator};
+use core::mem::MaybeUninit;
+use core::ops::Range;
+use core::ptr;
 
-pub(super) trait PreSort<T> {
-    fn par_pre_sort<K, F>(
-        &mut self,
-        cpu: usize,
-        key: F,
-    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)>
-    where
-        K: SortKey + Send + Sync,
-        F: KeyFn<T, K> + Send + Sync;
-}
-
-impl<T: Copy + Send + Sync> PreSort<T> for [T] {
+impl<K: SortKey + Send + Sync> BinLayout<K> {
     #[inline]
-    fn par_pre_sort<K, F>(
-        &mut self,
-        cpu: usize,
-        key: F,
-    ) -> Option<(Vec<usize>, Vec<MaybeUninit<T>>)>
+    pub(super) fn with_cpu_count<T, F>(cpu: usize, slice: &[T], key: F) -> Option<Self>
     where
-        K: SortKey + Send + Sync,
-        F: KeyFn<T, K> + Send + Sync
+        T: Copy + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
     {
-        let (min_key, max_key) = self.par_min_max(key);
+        let (min_key, max_key) = slice.par_min_max(key);
 
         if min_key == max_key {
             // array is flat
             return None;
         }
-        debug_assert!(cpu > 1);
+
         let max_bins_count = cpu.saturating_mul(4).min(MAX_BINS_COUNT);
 
-        let layout = BinLayout::new(min_key, max_key, max_bins_count);
+        Some(BinLayout::new(min_key, max_key, max_bins_count))
+    }
+}
 
-        let mut buffer: Vec<MaybeUninit<T>> = Vec::with_capacity(self.len());
-        unsafe {
-            buffer.set_len(self.len());
-        }
+trait ParMinMax<T> {
+    fn par_min_max<K, F>(&self, key: F) -> (K, K)
+    where
+        K: Copy + Ord + Send + Sync,
+        T: Copy + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync;
+}
 
-        let mut fragments = self.fragment_by_count(&mut buffer, cpu);
+impl<T> ParMinMax<T> for [T] {
+    #[inline(always)]
+    fn par_min_max<K, F>(&self, key: F) -> (K, K)
+    where
+        K: Copy + Ord + Send + Sync,
+        T: Copy + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
+    {
+        debug_assert!(!self.is_empty());
+        let first_val = self.first().unwrap();
+        let k0 = key(first_val);
 
-        let groups = layout.par_spread(&mut fragments, key);
+        let (min_key, max_key) = self
+            .par_iter()
+            .map(|v| {
+                let k = key(v);
+                (k, k)
+            })
+            .reduce(|| (k0, k0), |a, b| (a.0.min(b.0), a.1.max(b.1)));
 
-        // by this time the buffer contains semi sorted segments and should be fully initialized
-        let src = buffer.assume_init_slice_mut();
-
-        let marks = copy_groups(self, src, groups);
-
-        Some((marks, buffer))
+        (min_key, max_key)
     }
 }
 
 impl<K: SortKey + Send + Sync> BinLayout<K> {
+    pub(super) fn par_pre_sort<T, F>(
+        &self,
+        cpu: usize,
+        src: &mut [T],
+        buf: &mut [MaybeUninit<T>],
+        key: F,
+    ) -> Vec<usize>
+    where
+        T: Copy + Send + Sync,
+        F: KeyFn<T, K> + Send + Sync,
+    {
+        debug_assert_eq!(src.len(), buf.len());
+
+        let mut fragments = src.fragment_by_count(buf, cpu);
+
+        let groups = self.par_spread(&mut fragments, key);
+
+        // by this time the buffer contains semi sorted segments and should be fully initialized
+        let res = buf.assume_init_slice_mut();
+
+        copy_groups(src, res, groups)
+    }
+
     #[inline]
-    fn par_spread<T, F>(&self, fragments: &mut [Fragment<T>], key: F) -> Vec<Vec<Range<usize>>>
+    fn par_spread<T, F>(&self, fragments: &mut [PreSortFragment<T>], key: F) -> Vec<Vec<Range<usize>>>
     where
         T: Copy + Send + Sync,
         F: KeyFn<T, K> + Send + Sync,

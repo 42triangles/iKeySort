@@ -1,13 +1,14 @@
+use crate::sort::bin_layout::BinLayout;
+use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
-use crate::sort::parallel::fragment::Fragment;
-use crate::sort::parallel::fragmentation::Fragmentation;
-use crate::sort::parallel::presort::PreSort;
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 use rayon::prelude::*;
+use core::mem::MaybeUninit;
+use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 
 pub(crate) trait OneKeyBinSortParallel<T> {
-    fn par_sort_by_one_key<K, F>(&mut self, key: F)
+    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<MaybeUninit<T>>, key: F)
     where
         K: SortKey + Send + Sync,
         F: KeyFn<T, K> + Send + Sync;
@@ -15,7 +16,7 @@ pub(crate) trait OneKeyBinSortParallel<T> {
 
 impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
     #[inline]
-    fn par_sort_by_one_key<K, F>(&mut self, key: F)
+    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<MaybeUninit<T>>, key: F)
     where
         K: SortKey + Send + Sync,
         F: KeyFn<T, K> + Send + Sync,
@@ -27,19 +28,33 @@ impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
-            self.ser_sort_by_one_key(key);
+            reusable_buffer.resize_to_new_len(self.len());
+            self.ser_sort_by_one_key_and_uninit_buffer(reusable_buffer, key);
             return;
         };
 
-        if let Some((marks, mut buf)) = self.par_pre_sort(cpu, key) {
-            self.fragment_by_marks(&mut buf, &marks)
-                .par_iter_mut()
-                .for_each(|f| f.sort_by_one_key(key));
-        }
+        let layout = if let Some(layout) = BinLayout::with_cpu_count(cpu, self, key) {
+            layout
+        } else {
+            // array is flat
+            return;
+        };
+
+        reusable_buffer.resize_to_new_len(self.len());
+        let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key);
+
+        let init_buf = reusable_buffer.assume_init_slice_mut();
+        let mut frags = self.fragment_by_marks(init_buf, &marks);
+
+        frags.iter_mut()
+            .for_each(|f| f.sort_by_one_key(key));
+
+        // frags.par_iter_mut()
+        //     .for_each(|f| f.sort_by_one_key(key));
     }
 }
 
-impl<T> Fragment<'_, T>
+impl<T> SubSortFragment<'_, T>
 where
     T: Send + Copy,
 {
@@ -49,7 +64,7 @@ where
         K: SortKey,
         F: KeyFn<T, K>,
     {
-        self.src.sort_by_one_key_and_uninit_buffer(self.buf, key);
+        self.src.ser_sort_by_one_key_and_buffer(self.buf, key, true);
     }
 }
 
@@ -90,8 +105,8 @@ mod tests {
     fn test(count: usize) {
         let mut org: Vec<_> = (0..count).rev().collect();
         let mut arr = org.clone();
-        arr.par_sort_by_one_key(|&a| a);
+        arr.par_sort_by_one_key(&mut Vec::new(), |&a| a);
         org.sort_unstable();
-        assert_eq!(arr, org);
+        assert!(arr == org);
     }
 }

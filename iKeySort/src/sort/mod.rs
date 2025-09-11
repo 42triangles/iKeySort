@@ -1,4 +1,4 @@
-#[cfg(feature = "allow_multithreading")]
+// #[cfg(feature = "allow_multithreading")]
 mod parallel;
 mod serial;
 mod bin_layout;
@@ -7,4 +7,7 @@ mod min_max;
 mod spread;
 mod buffer;
 pub mod key;
-pub mod key_sort;
+pub mod one_key;
+pub mod one_key_cmp;
+pub mod two_keys;
+pub mod two_keys_cmp;

@@ -1,15 +1,20 @@
+use crate::sort::bin_layout::BinLayout;
+use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
-use crate::sort::parallel::fragment::Fragment;
-use crate::sort::parallel::fragmentation::Fragmentation;
-use crate::sort::parallel::presort::PreSort;
 use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
+use core::mem::MaybeUninit;
 use rayon::prelude::*;
+use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 
 pub(crate) trait TwoKeysBinSortParallel<T> {
-    fn par_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
-    where
+    fn par_sort_by_two_keys<K1, K2, F1, F2>(
+        &mut self,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key1: F1,
+        key2: F2,
+    ) where
         K1: SortKey + Send + Sync,
         K2: SortKey + Send + Sync,
         F1: KeyFn<T, K1> + Send + Sync,
@@ -17,8 +22,13 @@ pub(crate) trait TwoKeysBinSortParallel<T> {
 }
 
 impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
-    fn par_sort_by_two_keys<K1, K2, F1, F2>(&mut self, key1: F1, key2: F2)
-    where
+    #[inline]
+    fn par_sort_by_two_keys<K1, K2, F1, F2>(
+        &mut self,
+        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        key1: F1,
+        key2: F2,
+    ) where
         K1: SortKey + Send + Sync,
         K2: SortKey + Send + Sync,
         F1: KeyFn<T, K1> + Send + Sync,
@@ -28,25 +38,36 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
             return;
         }
 
+        reusable_buffer.resize_to_new_len(self.len());
+
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
-            self.ser_sort_by_two_keys(key1, key2);
+            self.ser_sort_by_two_keys_and_uninit_buffer(reusable_buffer, key1, key2);
             return;
         };
 
-        if let Some((marks, mut buffer)) = self.par_pre_sort(cpu, key1) {
-            self.fragment_by_marks(&mut buffer, &marks)
-                .par_iter_mut()
-                .for_each(|f| f.sort_by_two_keys(key1, key2));
+        let layout = if let Some(layout) = BinLayout::with_cpu_count(cpu, self, key1) {
+            layout
         } else {
             // array is flat by key1
-            self.par_sort_by_one_key(key2)
-        }
+            // sort it by key2
+            self.par_sort_by_one_key(reusable_buffer, key2);
+            return;
+        };
+
+        let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key1);
+
+        let init_buf = reusable_buffer.assume_init_slice_mut();
+        let mut frags = self.fragment_by_marks(init_buf, &marks);
+
+        frags
+            .par_iter_mut()
+            .for_each(|f| f.sort_by_two_keys(key1, key2));
     }
 }
 
-impl<T> Fragment<'_, T>
+impl<T> SubSortFragment<'_, T>
 where
     T: Send + Copy,
 {
@@ -59,7 +80,7 @@ where
         F2: KeyFn<T, K2>,
     {
         self.src
-            .sort_by_two_keys_and_uninit_buffer(self.buf, key1, key2);
+            .ser_sort_by_two_keys_and_buffer(self.buf, key1, key2, true);
     }
 }
 
@@ -79,7 +100,7 @@ mod tests {
 
     #[test]
     fn test_2() {
-        test(30);
+        test(25);
     }
 
     #[test]
@@ -100,9 +121,9 @@ mod tests {
     fn test(count: usize) {
         let mut org: Vec<_> = reversed_2d_array(count);
         let mut arr = org.clone();
-        arr.par_sort_by_two_keys(|a| a.0, |a| a.1);
+        arr.par_sort_by_two_keys(&mut Vec::new(), |a| a.0, |a| a.1);
         org.sort_unstable_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
-        assert_eq!(arr, org);
+        assert!(arr == org);
     }
 
     fn reversed_2d_array(count: usize) -> Vec<(i32, i32)> {

@@ -1,9 +1,14 @@
+use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::{ptr, slice};
 
 pub(crate) trait MaybeUninitInit<T> {
     fn assume_init_slice_mut(&mut self) -> &mut [T];
+}
+
+pub(crate) trait MaybeUninitResize<T> {
+    fn resize_to_new_len(&mut self, new_len: usize);
 }
 
 pub(crate) trait CopyFromNotOverlap<T> {
@@ -19,6 +24,19 @@ impl<T> MaybeUninitInit<T> for [MaybeUninit<T>] {
     #[inline(always)]
     fn assume_init_slice_mut(&mut self) -> &mut [T] {
         unsafe { slice::from_raw_parts_mut(self.as_mut_ptr() as *mut T, self.len()) }
+    }
+}
+
+impl<T> MaybeUninitResize<T> for Vec<T> {
+    #[inline(always)]
+    fn resize_to_new_len(&mut self, new_len: usize) {
+        let additional = new_len.saturating_sub(self.capacity());
+        if additional > 0 {
+            self.reserve(additional)
+        };
+        unsafe {
+            self.set_len(new_len);
+        }
     }
 }
 

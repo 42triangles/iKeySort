@@ -1,8 +1,9 @@
+use crate::sort::bin_layout::BIN_SORT_MIN;
 use crate::sort::buffer::{CopyFromNotOverlap, CopyNotOverlapValue, DoubleRangeSlices};
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
-use crate::sort::key_sort::BIN_SORT_MIN;
 use crate::sort::mapper::Mapper;
 use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
+use crate::sort::two_keys_cmp::sort_unstable_by_two_keys_then_by;
 
 impl Mapper {
     #[inline]
@@ -39,19 +40,15 @@ impl Mapper {
                 2..TINY_SORT_MAX => {
                     // SAFETY: mapper ranges never overlap; (src, buf) are distinct buffers.
                     let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
-                    sub_slice.sort_unstable_by(|a, b| {
-                        key1(a)
-                            .cmp(&key1(b))
-                            .then(key2(a).cmp(&key2(b)))
-                            .then(compare(a, b))
-                    });
+                    sort_unstable_by_two_keys_then_by(sub_slice, key1, key2, compare);
+
                     if copy_to_src {
                         buf.copy_to_range_from_not_overlap(sub_slice, range);
                     }
                 }
                 _ => {
                     let (sub_slice, sub_buffer) = range.mut_slices(src, buf);
-                    sub_slice.sort_by_two_keys_and_buffer_then_by(
+                    sub_slice.ser_sort_by_two_keys_then_by_and_buffer(
                         sub_buffer,
                         key1,
                         key2,

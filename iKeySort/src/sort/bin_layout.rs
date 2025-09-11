@@ -2,15 +2,19 @@ use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::min_max::MinMax;
 
 #[derive(Debug, Clone)]
-pub struct BinLayout<K: Copy> {
+pub(crate) struct BinLayout<K> {
     pub(crate) min_key: K,
     pub(crate) max_key: K,
     pub(crate) power: usize,
     bin_width_is_one: bool,
 }
 
-pub const MAX_BINS_POWER: u32 = 8;
-pub const MAX_BINS_COUNT: usize = 1 << MAX_BINS_POWER;
+// pub(crate) const BIN_SORT_MIN: usize = 64;
+
+pub(crate) const BIN_SORT_MIN: usize = 4;
+pub(crate) const MAX_BINS_POWER: u32 = 3;
+
+pub(crate) const MAX_BINS_COUNT: usize = 1 << MAX_BINS_POWER;
 
 impl<K: SortKey> BinLayout<K> {
     #[inline(always)]
