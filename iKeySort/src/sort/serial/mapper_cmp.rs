@@ -21,14 +21,14 @@ impl Mapper {
                 0 => continue,
                 1 => {
                     if copy_to_src {
-                        buf.copy_value_from(src, range.start);
+                        src.copy_value_from(buf, range.start);
                     }
                 }
                 _ => {
-                    let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
-                    sub_slice.sort_unstable_by(compare);
+                    let sub_buf = unsafe { buf.get_unchecked_mut(range.clone()) };
+                    sub_buf.sort_unstable_by(compare);
                     if copy_to_src {
-                        buf.copy_to_range_from_not_overlap(sub_slice, range);
+                        src.copy_to_range_from_not_overlap(sub_buf, range);
                     }
                 }
             }

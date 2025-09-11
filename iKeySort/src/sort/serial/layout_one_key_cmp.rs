@@ -29,8 +29,6 @@ impl<K: SortKey> BinLayout<K> {
             // continue sort elements by compare
             mapper.sort_chunks_by(src, init_buffer, compare, true);
         } else {
-            // start ping pong
-            // invert src and buffer
             mapper.sort_chunks_by_one_key_then_by(src, init_buffer, key, compare, true);
         }
     }
@@ -57,9 +55,7 @@ impl<K: SortKey> BinLayout<K> {
             // continue sort elements by compare
             mapper.sort_chunks_by(src, buf, compare, copy_to_src);
         } else {
-            // continue ping pong
-            // invert src and buf
-            mapper.sort_chunks_by_one_key_then_by(buf, src, key, compare, !copy_to_src);
+            mapper.sort_chunks_by_one_key_then_by(src, buf, key, compare, copy_to_src);
         }
     }
 }

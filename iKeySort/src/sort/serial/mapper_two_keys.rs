@@ -32,21 +32,21 @@ impl Mapper {
                 0 => continue,
                 1 => {
                     if copy_to_src {
-                        buf.copy_value_from(src, range.start);
+                        src.copy_value_from(buf, range.start);
                     }
                 }
                 2..TINY_SORT_MAX => {
                     // SAFETY: mapper ranges never overlap; (src, buf) are distinct buffers.
-                    let sub_slice = unsafe { src.get_unchecked_mut(range.clone()) };
-                    sort_unstable_by_two_keys(sub_slice, key1, key2);
+                    let sub_buf = unsafe { buf.get_unchecked_mut(range.clone()) };
+                    sort_unstable_by_two_keys(sub_buf, key1, key2);
 
                     if copy_to_src {
-                        buf.copy_to_range_from_not_overlap(sub_slice, range);
+                        src.copy_to_range_from_not_overlap(sub_buf, range);
                     }
                 }
                 _ => {
-                    let (sub_slice, sub_buffer) = range.mut_slices(src, buf);
-                    sub_slice.ser_sort_by_two_keys_and_buffer(sub_buffer, key1, key2, copy_to_src);
+                    let (sub_src, sub_buf) = range.mut_slices(src, buf);
+                    sub_buf.ser_sort_by_two_keys_and_buffer(sub_src, key1, key2, !copy_to_src);
                 }
             }
         }

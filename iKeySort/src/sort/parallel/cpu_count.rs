@@ -21,7 +21,7 @@ impl CPUCount {
     #[cfg(debug_assertions)]
     #[inline(always)]
     pub(super) fn should_parallel(_: usize) -> Option<usize> {
-        // Some(CPUCount::count().max(1))
-        Some(1)
+        Some(CPUCount::count().max(1))
+        // Some(1)
     }
 }

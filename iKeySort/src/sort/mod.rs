@@ -1,4 +1,4 @@
-// #[cfg(feature = "allow_multithreading")]
+#[cfg(feature = "allow_multithreading")]
 mod parallel;
 mod serial;
 mod bin_layout;

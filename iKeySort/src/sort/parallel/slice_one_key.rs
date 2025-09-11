@@ -2,10 +2,11 @@ use crate::sort::bin_layout::BinLayout;
 use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
-use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
-use rayon::prelude::*;
-use core::mem::MaybeUninit;
 use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
+use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
+use core::mem::MaybeUninit;
+use rayon::iter::ParallelIterator;
+use rayon::prelude::IntoParallelRefMutIterator;
 
 pub(crate) trait OneKeyBinSortParallel<T> {
     fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<MaybeUninit<T>>, key: F)
@@ -46,11 +47,7 @@ impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
         let init_buf = reusable_buffer.assume_init_slice_mut();
         let mut frags = self.fragment_by_marks(init_buf, &marks);
 
-        frags.iter_mut()
-            .for_each(|f| f.sort_by_one_key(key));
-
-        // frags.par_iter_mut()
-        //     .for_each(|f| f.sort_by_one_key(key));
+        frags.par_iter_mut().for_each(|f| f.sort_by_one_key(key));
     }
 }
 

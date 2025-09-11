@@ -9,10 +9,10 @@ pub(crate) struct BinLayout<K> {
     bin_width_is_one: bool,
 }
 
-// pub(crate) const BIN_SORT_MIN: usize = 64;
+pub(crate) const BIN_SORT_MIN: usize = 64;
 
-pub(crate) const BIN_SORT_MIN: usize = 4;
-pub(crate) const MAX_BINS_POWER: u32 = 3;
+// pub(crate) const BIN_SORT_MIN: usize = 4;
+pub(crate) const MAX_BINS_POWER: u32 = 8;
 
 pub(crate) const MAX_BINS_COUNT: usize = 1 << MAX_BINS_POWER;
 

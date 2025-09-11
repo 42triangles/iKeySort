@@ -48,8 +48,6 @@ impl<K: SortKey> BinLayout<K> {
                 src.copy_from_not_overlap(buf);
             }
         } else {
-            // continue ping pong
-            // invert src and buf
             mapper.sort_chunks_by_one_key(src, buf, key, copy_to_src);
         }
     }

@@ -1,5 +1,4 @@
 pub(super) struct SubSortFragment<'a, T> {
-    pub(super) base: usize,
     pub(super) src: &'a mut [T],
     pub(super) buf: &'a mut [T],
 }
@@ -37,7 +36,6 @@ impl<T> FragmentationByMarks<T> for [T] {
             let (left_buf, right_buf) = buf.split_at_mut(md);
 
             frags.push(SubSortFragment {
-                base,
                 src: left_src,
                 buf: left_buf,
             });
@@ -49,7 +47,7 @@ impl<T> FragmentationByMarks<T> for [T] {
         }
 
         if !src.is_empty() {
-            frags.push(SubSortFragment { base, src, buf });
+            frags.push(SubSortFragment { src, buf });
         }
 
         frags

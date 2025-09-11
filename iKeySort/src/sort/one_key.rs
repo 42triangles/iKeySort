@@ -158,29 +158,9 @@ mod tests {
         let mut arr1 = org.clone();
         let mut arr2 = org.clone();
         arr1.sort_by_one_key(true, |&a| a);
-        // arr2.sort_by_one_key(false, |&a| a);
+        arr2.sort_by_one_key(true, |&a| a);
         org.sort_unstable();
         assert!(arr1 == org);
-        // assert!(arr2 == org);
-    }
-
-    #[test]
-    fn test_custom() {
-        let mut org = vec![
-            54, 53, 52, 51,
-            44, 43, 42, 41,
-            34, 33, 32, 31,
-            24, 23, 22, 21,
-            54, 53, 52, 51,
-            64, 63, 62, 61,
-            74, 73, 72, 71,
-            84, 83, 82, 81,
-            94, 93, 92, 91,
-        ];
-        let mut arr1 = org.clone();
-        arr1.sort_by_one_key(true, |&a| a);
-        // arr2.sort_by_one_key(false, |&a| a);
-        org.sort_unstable();
-        assert!(arr1 == org);
+        assert!(arr2 == org);
     }
 }
