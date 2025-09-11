@@ -1,8 +1,8 @@
 use crate::geom::id_point::IdPoint;
 use crate::geom::start_segment::StartEnd;
-use i_key_sort::sort::key_sort::KeySort;
 use rayon::slice::ParallelSliceMut;
 use std::time::Instant;
+use i_key_sort::sort::two_keys::TwoKeysSort;
 
 pub struct SortSolution;
 

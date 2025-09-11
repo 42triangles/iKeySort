@@ -14,7 +14,7 @@ pub struct CircleTest {
 impl CircleTest {
 
     pub fn new(n: usize) -> Self {
-        let segments = Self::circle_segments(10000, n);
+        let segments = Self::circle_segments(100_000, n);
         let index_segments: Vec<_> = segments.iter().enumerate().map(|(i, s)|IndexSegment::new(i, s)).collect();
         let id_segments: Vec<_> = segments.iter().enumerate().map(|(i, s)|IdSegment::new(i, s)).collect();
         Self {

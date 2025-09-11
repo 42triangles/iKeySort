@@ -31,7 +31,7 @@ impl SpiralTest {
     }
 
     pub fn run_all(&self) {
-        println!("Checkerboard");
+        println!("Spiral");
         self.run_segments();
         println!();
         self.run_index_segments();
