@@ -4,6 +4,22 @@ use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
+/// Sort a slice lexicographically by two integer‐like keys, then by a comparator.
+///
+/// This is the most general API: primary key, secondary key,
+/// and a tiebreaking comparator.
+///
+/// - Accepts `parallel: bool`. Ignored without `allow_multithreading`.
+/// - Two variants: allocate internally or reuse a buffer.
+///
+/// # Examples
+/// ```
+/// use i_key_sort::sort::two_keys_cmp::TwoKeysAndCmpSort;
+///
+/// let mut v = vec![(1u32,0i32,9i32), (1,0,3), (1,1,1)];
+/// v.sort_by_two_keys_then_by(true, |x| x.0, |x| x.1, |a,b| a.2.cmp(&b.2));
+/// assert_eq!(v, [(1,0,3), (1,0,9), (1,1,1)]);
+/// ```
 #[cfg(not(feature = "allow_multithreading"))]
 pub trait TwoKeysAndCmpSort<T> {
     fn sort_by_two_keys_then_by<K1, K2, F1, F2, F3>(

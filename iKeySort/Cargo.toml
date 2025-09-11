@@ -1,6 +1,6 @@
 [package]
 name = "i_key_sort"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Nail Sharipov <nailxsharipov@gmail.com>"]
 edition = "2024"
 description = "Counting sort algorithm."
@@ -22,6 +22,3 @@ rayon = { optional = true, version = "^1.11" }
 default = []
 std = []
 allow_multithreading = ["std", "dep:rayon"]
-
-[dev-dependencies]
-rand = { version = "~0.9" }

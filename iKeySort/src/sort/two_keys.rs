@@ -4,6 +4,20 @@ use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
+/// Sort a slice lexicographically by two integer‐like keys.
+///
+/// - First bins by `key1`, then within bins by `key2`.
+/// - Accepts `parallel: bool`. Ignored without `allow_multithreading`.
+/// - Has two variants: allocate internally or reuse a buffer.
+///
+/// # Examples
+/// ```
+/// use i_key_sort::sort::two_keys::TwoKeysSort;
+///
+/// let mut v = vec![(2,1), (1,2), (1,0)];
+/// v.sort_by_two_keys(true, |x| x.0, |x| x.1);
+/// assert_eq!(v, [(1,0), (1,2), (2,1)]);
+/// ```
 #[cfg(not(feature = "allow_multithreading"))]
 pub trait TwoKeysSort<T> {
     fn sort_by_two_keys<K1, K2, F1, F2>(&mut self, parallel: bool, key1: F1, key2: F2)

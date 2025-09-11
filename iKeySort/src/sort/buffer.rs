@@ -27,7 +27,7 @@ impl<T> MaybeUninitInit<T> for [MaybeUninit<T>] {
     }
 }
 
-impl<T> MaybeUninitResize<T> for Vec<T> {
+impl<T> MaybeUninitResize<T> for Vec<MaybeUninit<T>> {
     #[inline(always)]
     fn resize_to_new_len(&mut self, new_len: usize) {
         let additional = new_len.saturating_sub(self.capacity());

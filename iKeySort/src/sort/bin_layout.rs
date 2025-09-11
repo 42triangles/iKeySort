@@ -24,6 +24,7 @@ impl<K: SortKey> BinLayout<K> {
 
     #[inline(always)]
     pub fn index(&self, value: K) -> usize {
+        debug_assert!(value >= self.min_key, "value must be >= min_key");
         let offset = value.difference(self.min_key);
         offset >> self.power
     }
@@ -45,7 +46,7 @@ impl<K: SortKey> BinLayout<K> {
             };
         }
 
-        let scale = (length + 1).ilog2_ceil();
+        let scale = length.saturating_add(1).ilog2_ceil();
         let power = scale.saturating_sub(max_bins_count.ilog2()) as usize;
 
         Self {

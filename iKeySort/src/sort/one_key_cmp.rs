@@ -4,6 +4,22 @@ use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
+/// Sort a slice by a primary integer‐like key, then by a comparator.
+///
+/// Useful when you want “group by key, then custom order inside groups”.
+///
+/// - Accepts `parallel: bool`. Ignored without the `allow_multithreading` feature.
+/// - Accepts a key extractor and a comparator.
+/// - Provides two variants: allocates internally, or reuse a buffer.
+///
+/// # Examples
+/// ```
+/// use i_key_sort::sort::one_key_cmp::OneKeyAndCmpSort;
+///
+/// let mut v = vec![("b", 2), ("a", 3), ("a", 1)];
+/// v.sort_by_one_key_then_by(true, |x| x.0.as_bytes()[0], |a,b| a.1.cmp(&b.1));
+/// assert_eq!(v, [("a",1), ("a",3), ("b",2)]);
+/// ```
 #[cfg(not(feature = "allow_multithreading"))]
 pub trait OneKeyAndCmpSort<T> {
     fn sort_by_one_key_then_by<K, F1, F2>(&mut self, parallel: bool, key: F1, compare: F2)

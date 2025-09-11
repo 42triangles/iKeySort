@@ -4,6 +4,30 @@ use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
+/// Sort a slice by a single integer‐like key function.
+///
+/// This is the simplest and fastest entry point: it bins by key,
+/// then sorts within bins if needed.
+///
+/// - Accepts a `parallel: bool` flag.
+///   *If the crate was built without the `allow_multithreading` feature,
+///   this flag is ignored and sorting runs serially.*
+/// - Accepts a key extractor `F: Fn(&T) -> K` where `K: SortKey`
+///   (all integer types are supported).
+///
+/// Two variants:
+/// - [`sort_by_one_key`] — allocates a buffer internally.
+/// - [`sort_by_one_key_and_buffer`] — caller provides a reusable
+///   `Vec<MaybeUninit<T>>` to avoid allocations.
+///
+/// # Examples
+/// ```
+/// use i_key_sort::sort::one_key::OneKeySort;
+///
+/// let mut v = [5, 1, 4, 2];
+/// v.sort_by_one_key(true, |&x| x);
+/// assert_eq!(v, [1,2,4,5]);
+/// ```
 #[cfg(not(feature = "allow_multithreading"))]
 pub trait OneKeySort<T> {
     fn sort_by_one_key<K, F>(&mut self, parallel: bool, key: F)
