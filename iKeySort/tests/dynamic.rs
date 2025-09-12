@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
     use i_key_sort::sort::one_key::OneKeySort;
+    use i_key_sort::sort::one_key_cmp::OneKeyAndCmpSort;
     use i_key_sort::sort::two_keys::TwoKeysSort;
     use i_key_sort::sort::two_keys_cmp::TwoKeysAndCmpSort;
     use std::f64::consts::PI;
-    use i_key_sort::sort::one_key_cmp::OneKeyAndCmpSort;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     pub struct Point {
@@ -35,81 +35,129 @@ mod tests {
 
     #[test]
     fn test_circle_one_key() {
-        for n in 1..5_000 {
-            circle_one_key_test(n);
+        for n in 1..1_000 {
+            circle_one_key_test(n, 2.0);
+            circle_one_key_test(n, 10.0);
+            circle_one_key_test(n, 20.0);
+            circle_one_key_test(n, 50.0);
+            circle_one_key_test(n, 100.0);
+            circle_one_key_test(n, 200.0);
+            circle_one_key_test(n, 1000.0);
         }
     }
 
     #[test]
     fn test_circle_one_key_cmp() {
-        for n in 1..5_000 {
-            circle_one_key_cmp_test(n);
+        for n in 1..1_000 {
+            circle_one_key_cmp_test(n, 2.0);
+            circle_one_key_cmp_test(n, 10.0);
+            circle_one_key_cmp_test(n, 20.0);
+            circle_one_key_cmp_test(n, 50.0);
+            circle_one_key_cmp_test(n, 100.0);
+            circle_one_key_cmp_test(n, 200.0);
+            circle_one_key_cmp_test(n, 1000.0);
         }
     }
 
     #[test]
     fn test_circle_two_keys() {
-        for n in 1..5_000 {
-            circle_two_keys_test(n);
+        for n in 1..1_000 {
+            circle_two_keys_test(n, 2.0);
+            circle_two_keys_test(n, 10.0);
+            circle_two_keys_test(n, 20.0);
+            circle_two_keys_test(n, 50.0);
+            circle_two_keys_test(n, 100.0);
+            circle_two_keys_test(n, 200.0);
+            circle_two_keys_test(n, 1000.0);
         }
     }
 
     #[test]
     fn test_circle_two_keys_cmp() {
-        for n in 1..5_000 {
-            circle_two_keys_cmp_test(n);
+        for n in 1..1_000 {
+            circle_two_keys_cmp_test(n, 2.0);
+            circle_two_keys_cmp_test(n, 10.0);
+            circle_two_keys_cmp_test(n, 20.0);
+            circle_two_keys_cmp_test(n, 50.0);
+            circle_two_keys_cmp_test(n, 100.0);
+            circle_two_keys_cmp_test(n, 200.0);
+            circle_two_keys_cmp_test(n, 1000.0);
         }
     }
 
-    fn circle_one_key_test(count: usize) {
-        let mut segments = circle_x(40.0, count);
+    fn circle_one_key_test(count: usize, radius: f64) {
+        let mut segments = circle_x(radius, count);
 
-        let mut sorted = segments.clone();
-        sorted.sort_by_one_key(false, |&x| x);
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
+                arr.sort_by_one_key(parallel, |&x| x);
+                arr
+            })
+            .collect();
+
         segments.sort_unstable_by(|x0, x1| x0.cmp(&x1));
 
-        if sorted != segments {
-            println!("count: {}", count);
-            assert_eq!(sorted, segments);
+        for arr in res {
+            assert_eq!(arr, segments);
         }
     }
 
-    fn circle_one_key_cmp_test(count: usize) {
-        let mut segments = circle_point(40.0, count);
+    fn circle_one_key_cmp_test(count: usize, radius: f64) {
+        let mut segments = circle_point(radius, count);
 
-        let mut sorted = segments.clone();
-        sorted.sort_by_one_key_then_by(false, |p| p.x, |p0, p1| p0.y.cmp(&p1.y));
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
+                arr.sort_by_one_key_then_by(parallel, |p| p.x, |p0, p1| p0.y.cmp(&p1.y));
+                arr
+            })
+            .collect();
+
         segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
 
-        if sorted != segments {
-            println!("count: {}", count);
-            assert_eq!(sorted, segments);
+        for arr in res {
+            assert_eq!(arr, segments);
         }
     }
 
-    fn circle_two_keys_test(count: usize) {
-        let mut segments = circle_point(40.0, count);
+    fn circle_two_keys_test(count: usize, radius: f64) {
+        let mut segments = circle_point(radius, count);
 
-        let mut sorted = segments.clone();
-        sorted.sort_by_two_keys(false, |p| p.x, |p| p.y);
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
+                arr.sort_by_two_keys(parallel, |p| p.x, |p| p.y);
+                arr
+            })
+            .collect();
+
         segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
 
-        if sorted != segments {
-            println!("count: {}", count);
-            assert_eq!(sorted, segments);
+        for arr in res {
+            assert_eq!(arr, segments);
         }
     }
 
-    fn circle_two_keys_cmp_test(count: usize) {
-        let mut segments = circle_segments(1.0, 0.0, count);
+    fn circle_two_keys_cmp_test(count: usize, radius: f64) {
+        let mut segments = circle_segments(radius, 0.0, count);
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
 
-        let mut sorted = segments.clone();
-        sorted.sort_by_two_keys_then_by(
-            false,
-            |s| s.a.x,
-            |s| s.a.y,
-            |s0, s1| s0.b.x.cmp(&s1.b.x).then(s0.b.y.cmp(&s1.b.y)),
-        );
+                arr.sort_by_two_keys_then_by(
+                    parallel,
+                    |s| s.a.x,
+                    |s| s.a.y,
+                    |s0, s1| s0.b.x.cmp(&s1.b.x).then(s0.b.y.cmp(&s1.b.y)),
+                );
+                arr
+            })
+            .collect();
 
         segments.sort_unstable_by(|s0, s1| {
             s0.a.x
@@ -118,9 +166,8 @@ mod tests {
                 .then(s0.b.x.cmp(&s1.b.x).then(s0.b.y.cmp(&s1.b.y)))
         });
 
-        if sorted != segments {
-            println!("count: {}", count);
-            assert_eq!(sorted, segments);
+        for arr in res {
+            assert_eq!(arr, segments);
         }
     }
 
