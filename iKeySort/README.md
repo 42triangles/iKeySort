@@ -4,3 +4,5 @@
 [![docs.rs docs](https://docs.rs/i_key_sort/badge.svg)](https://docs.rs/i_key_sort)
 
 A fast sorting algorithm combining bin and counting sort. Optimized for scenarios where a primary key can be extracted to index elements into buckets.
+
+<img src="readme/sort_algorithm.gif" width="512"/>
