@@ -177,12 +177,19 @@ mod tests {
         test(1000_000);
     }
 
+    #[test]
+    fn test_dynamic_0() {
+        for i in 0..1_000 {
+            test(i);
+        }
+    }
+
     fn test(count: usize) {
         let mut org: Vec<_> = (0..count).rev().collect();
         let mut arr1 = org.clone();
         let mut arr2 = org.clone();
         arr1.sort_by_one_key(true, |&a| a);
-        arr2.sort_by_one_key(true, |&a| a);
+        arr2.sort_by_one_key(false, |&a| a);
         org.sort_unstable();
         assert!(arr1 == org);
         assert!(arr2 == org);

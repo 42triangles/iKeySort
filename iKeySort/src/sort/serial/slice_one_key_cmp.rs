@@ -9,7 +9,7 @@ pub(crate) trait OneKeyBinSortCmpSerial<T> {
     fn ser_sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         buf: &mut [T],
-        key1: F1,
+        key: F1,
         compare: F2,
         copy_to_src: bool,
     ) where
@@ -20,7 +20,7 @@ pub(crate) trait OneKeyBinSortCmpSerial<T> {
     fn ser_sort_by_one_key_then_by_and_uninit_buffer<K, F1, F2>(
         &mut self,
         buf: &mut Vec<MaybeUninit<T>>,
-        key1: F1,
+        key: F1,
         compare: F2,
     ) where
         K: SortKey,
@@ -33,7 +33,7 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
     fn ser_sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         buf: &mut [T],
-        key1: F1,
+        key: F1,
         compare: F2,
         copy_to_src: bool,
     ) where
@@ -42,12 +42,12 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
         F2: CmpFn<T>,
     {
         debug_assert_eq!(self.len(), buf.len());
-        if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_one_key_then_by_and_buffer(self, buf, key1, compare, copy_to_src);
+        if let Some(layout) = BinLayout::with_keys(self, key) {
+            layout.sort_by_one_key_then_by_and_buffer(self, buf, key, compare, copy_to_src);
         } else {
             // one bin with single key for all elements
             self.sort_unstable_by(compare);
-            if copy_to_src {
+            if !copy_to_src {
                 buf.copy_from_not_overlap(self);
             }
         }
@@ -57,15 +57,15 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
     fn ser_sort_by_one_key_then_by_and_uninit_buffer<K, F1, F2>(
         &mut self,
         buf: &mut Vec<MaybeUninit<T>>,
-        key1: F1,
+        key: F1,
         compare: F2,
     ) where
         K: SortKey,
         F1: KeyFn<T, K>,
         F2: CmpFn<T>,
     {
-        if let Some(layout) = BinLayout::with_keys(self, key1) {
-            layout.sort_by_one_key_then_by_and_uninit_buffer(self, buf, key1, compare);
+        if let Some(layout) = BinLayout::with_keys(self, key) {
+            layout.sort_by_one_key_then_by_and_uninit_buffer(self, buf, key, compare);
         } else {
             // one bin with single key for all elements
             self.sort_unstable_by(compare);

@@ -1,7 +1,8 @@
+use crate::sort::bin_layout::BinLayout;
+use crate::sort::buffer::CopyFromNotOverlap;
+use crate::sort::key::{KeyFn, SortKey};
 use alloc::vec::Vec;
 use core::mem::MaybeUninit;
-use crate::sort::bin_layout::BinLayout;
-use crate::sort::key::{KeyFn, SortKey};
 
 pub(crate) trait OneKeyBinSortSerial<T> {
     fn ser_sort_by_one_key_and_buffer<K: SortKey, F: KeyFn<T, K>>(
@@ -29,6 +30,8 @@ impl<T: Copy> OneKeyBinSortSerial<T> for [T] {
         debug_assert_eq!(self.len(), buf.len());
         if let Some(layout) = BinLayout::with_keys(self, key) {
             layout.sort_by_one_key_and_buffer(self, buf, key, copy_to_src);
+        } else if !copy_to_src {
+            buf.copy_from_not_overlap(self);
         }
     }
 

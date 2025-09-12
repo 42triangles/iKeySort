@@ -200,6 +200,13 @@ mod tests {
         test(1000);
     }
 
+    #[test]
+    fn test_dynamic_0() {
+        for i in 0..100 {
+            test(i);
+        }
+    }
+
     fn test(count: usize) {
         let mut org: Vec<_> = reversed_2d_array(count);
         let mut arr1 = org.clone();
