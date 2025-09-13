@@ -3,7 +3,13 @@
 [![crates.io version](https://img.shields.io/crates/v/i_key_sort.svg)](https://crates.io/crates/i_key_sort)
 [![docs.rs docs](https://docs.rs/i_key_sort/badge.svg)](https://docs.rs/i_key_sort)
 
-A fast sorting algorithm combining bin and counting sort. Optimized for scenarios where a primary key can be extracted to index elements into buckets.
+A fast [Radix-Sort–style](https://en.wikipedia.org/wiki/Radix_sort) algorithm in Rust.  
+It combines binning and counting sort ideas: instead of multiple digit passes, it maps
+elements directly into power-of-two buckets in a single step, with optional
+parallel execution.
+
+Optimized for cases where a primary key can be extracted efficiently to index
+elements into buckets.
 
 <img src="readme/sort_algorithm.gif" width="512"/>
 
