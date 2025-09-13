@@ -48,7 +48,6 @@ impl CheckerboardTest {
         SortSolution::run_segments_par_sort_unstable(&self.segments);
         SortSolution::run_segments_bin_sort(&self.segments);
         SortSolution::run_segments_par_bin_sort(&self.segments);
-        SortSolution::run_segments_ref_sort(&self.segments);
         SortSolution::run_compare(&self.segments);
     }
 
@@ -61,7 +60,6 @@ impl CheckerboardTest {
         SortSolution::run_segments_par_sort_unstable(&self.index_segments);
         SortSolution::run_segments_bin_sort(&self.index_segments);
         SortSolution::run_segments_par_bin_sort(&self.index_segments);
-        SortSolution::run_segments_ref_sort(&self.index_segments);
     }
 
     pub fn run_id_segments(&self) {
@@ -73,7 +71,6 @@ impl CheckerboardTest {
         SortSolution::run_segments_par_sort_unstable(&self.id_segments);
         SortSolution::run_segments_bin_sort(&self.id_segments);
         SortSolution::run_segments_par_bin_sort(&self.id_segments);
-        SortSolution::run_segments_ref_sort(&self.id_segments);
     }
 
     fn checkerboard_segments(size: i32, offset: i32, n: usize) -> Vec<Segment> {

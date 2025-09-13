@@ -42,7 +42,6 @@ impl CircleTest {
         SortSolution::run_segments_par_sort_unstable(&self.segments);
         SortSolution::run_segments_bin_sort(&self.segments);
         SortSolution::run_segments_par_bin_sort(&self.segments);
-        SortSolution::run_segments_ref_sort(&self.segments);
         SortSolution::run_compare(&self.segments);
     }
 
@@ -55,7 +54,6 @@ impl CircleTest {
         SortSolution::run_segments_par_sort_unstable(&self.index_segments);
         SortSolution::run_segments_bin_sort(&self.index_segments);
         SortSolution::run_segments_par_bin_sort(&self.index_segments);
-        SortSolution::run_segments_ref_sort(&self.index_segments);
     }
 
     pub fn run_id_segments(&self) {
@@ -67,7 +65,6 @@ impl CircleTest {
         SortSolution::run_segments_par_sort_unstable(&self.id_segments);
         SortSolution::run_segments_bin_sort(&self.id_segments);
         SortSolution::run_segments_par_bin_sort(&self.id_segments);
-        SortSolution::run_segments_ref_sort(&self.id_segments);
     }
 
     fn circle_segments(radius: i32, n: usize) -> Vec<Segment> {
