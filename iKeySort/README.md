@@ -63,7 +63,7 @@ assert_eq!(v, [(1, 0, 3), (1, 0, 9), (1, 1, 1)]);
 ### 5) Reusing a buffer to avoid allocations
 
 ```rust
-use i_key_sort::sort::two_keys_cmp::TwoKeysAndCmpSort;
+use i_key_sort::sort::one_key::OneKeySort;
 use core::mem::MaybeUninit;
 
 let mut buf = Vec::new();
