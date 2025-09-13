@@ -6,7 +6,7 @@ use std::time::Instant;
 pub struct SortSolution;
 
 impl SortSolution {
-    pub fn run_segments_sort_unstable<S: StartEnd>(segments: &[S]) {
+    pub fn run_segments_sort_unstable<S: StartEnd>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -17,10 +17,12 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("sort_unstable", data.last().unwrap().end().x, duration);
+        Self::print_result("sort_unstable", duration);
+
+        data.last().unwrap().end().x
     }
 
-    pub fn run_segments_sort_stable<S: StartEnd>(segments: &[S]) {
+    pub fn run_segments_sort_stable<S: StartEnd>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -31,10 +33,12 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("sort_stable", data.last().unwrap().end().x, duration);
+        Self::print_result("sort_stable", duration);
+
+        data.last().unwrap().end().x
     }
 
-    pub fn run_segments_par_sort_unstable<S: StartEnd>(segments: &[S]) {
+    pub fn run_segments_par_sort_unstable<S: StartEnd>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -45,10 +49,12 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par_sort_unstable", data.last().unwrap().end().x, duration);
+        Self::print_result("par_sort_unstable", duration);
+
+        data.last().unwrap().end().x
     }
 
-    pub fn run_segments_par_sort_stable<S: StartEnd>(segments: &[S]) {
+    pub fn run_segments_par_sort_stable<S: StartEnd>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -59,10 +65,12 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par_sort_stable", data.last().unwrap().end().x, duration);
+        Self::print_result("par_sort_stable", duration);
+
+        data.last().unwrap().end().x
     }
 
-    pub fn run_segments_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) {
+    pub fn run_segments_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -73,10 +81,12 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("bin_sort", data.last().unwrap().end().x, duration);
+        Self::print_result("bin_sort", duration);
+
+        data.last().unwrap().end().x
     }
 
-    pub fn run_segments_par_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) {
+    pub fn run_segments_par_bin_sort<S: StartEnd + Copy + Default>(segments: &[S]) -> i32 {
         let mut data = segments.to_vec();
         let start = Instant::now();
 
@@ -87,11 +97,13 @@ impl SortSolution {
         }
         let duration = start.elapsed().as_secs_f64() / (n as f64);
 
-        Self::print_result("par bin_sort", data.last().unwrap().end().x, duration);
+        Self::print_result("par_bin_sort", duration);
+
+        data.last().unwrap().end().x
     }
 
-    fn print_result(title: &str, result: i32, duration: f64) {
-        println!("{} - {:.6} hash: {}", title, duration, result);
+    fn print_result(title: &str, duration: f64) {
+        println!("{} - {:.6}", title, duration);
     }
 
     pub fn run_compare<S: StartEnd + Copy + Default>(segments: &[S]) {

@@ -25,6 +25,7 @@ impl CheckerboardTest {
 
     pub fn run_all(&self) {
         println!("Checkerboard");
+        println!();
         self.run_segments();
         println!();
         self.run_index_segments();
@@ -40,37 +41,61 @@ impl CheckerboardTest {
     }
 
     pub fn run_segments(&self) {
+        println!("Segment size:  {} bytes", size_of::<Segment>());
         println!("Segments test n = {}", self.segments.len());
         println!();
-        SortSolution::run_segments_sort_stable(&self.segments);
-        SortSolution::run_segments_sort_unstable(&self.segments);
-        SortSolution::run_segments_par_sort_stable(&self.segments);
-        SortSolution::run_segments_par_sort_unstable(&self.segments);
-        SortSolution::run_segments_bin_sort(&self.segments);
-        SortSolution::run_segments_par_bin_sort(&self.segments);
+        let hash_0 = SortSolution::run_segments_sort_stable(&self.segments);
+        let hash_1 = SortSolution::run_segments_sort_unstable(&self.segments);
+        let hash_2 = SortSolution::run_segments_par_sort_stable(&self.segments);
+        let hash_3 = SortSolution::run_segments_par_sort_unstable(&self.segments);
+        let hash_4 = SortSolution::run_segments_bin_sort(&self.segments);
+        let hash_5 = SortSolution::run_segments_par_bin_sort(&self.segments);
+
+        debug_assert_eq!(hash_0, hash_1);
+        debug_assert_eq!(hash_0, hash_2);
+        debug_assert_eq!(hash_0, hash_3);
+        debug_assert_eq!(hash_0, hash_4);
+        debug_assert_eq!(hash_0, hash_5);
         SortSolution::run_compare(&self.segments);
+        println!("---");
     }
 
     pub fn run_index_segments(&self) {
+        println!("Segment size:  {} bytes", size_of::<IndexSegment>());
         println!("Index Segments test n = {}", self.index_segments.len());
         println!();
-        SortSolution::run_segments_sort_stable(&self.index_segments);
-        SortSolution::run_segments_sort_unstable(&self.index_segments);
-        SortSolution::run_segments_par_sort_stable(&self.index_segments);
-        SortSolution::run_segments_par_sort_unstable(&self.index_segments);
-        SortSolution::run_segments_bin_sort(&self.index_segments);
-        SortSolution::run_segments_par_bin_sort(&self.index_segments);
+        let hash_0 = SortSolution::run_segments_sort_stable(&self.index_segments);
+        let hash_1 = SortSolution::run_segments_sort_unstable(&self.index_segments);
+        let hash_2 = SortSolution::run_segments_par_sort_stable(&self.index_segments);
+        let hash_3 = SortSolution::run_segments_par_sort_unstable(&self.index_segments);
+        let hash_4 = SortSolution::run_segments_bin_sort(&self.index_segments);
+        let hash_5 = SortSolution::run_segments_par_bin_sort(&self.index_segments);
+
+        debug_assert_eq!(hash_0, hash_1);
+        debug_assert_eq!(hash_0, hash_2);
+        debug_assert_eq!(hash_0, hash_3);
+        debug_assert_eq!(hash_0, hash_4);
+        debug_assert_eq!(hash_0, hash_5);
+        println!("---");
     }
 
     pub fn run_id_segments(&self) {
+        println!("Segment size:  {} bytes", size_of::<IdSegment>());
         println!("Id Segments test n = {}", self.id_segments.len());
         println!();
-        SortSolution::run_segments_sort_stable(&self.id_segments);
-        SortSolution::run_segments_sort_unstable(&self.id_segments);
-        SortSolution::run_segments_par_sort_stable(&self.id_segments);
-        SortSolution::run_segments_par_sort_unstable(&self.id_segments);
-        SortSolution::run_segments_bin_sort(&self.id_segments);
-        SortSolution::run_segments_par_bin_sort(&self.id_segments);
+        let hash_0 = SortSolution::run_segments_sort_stable(&self.id_segments);
+        let hash_1 = SortSolution::run_segments_sort_unstable(&self.id_segments);
+        let hash_2 = SortSolution::run_segments_par_sort_stable(&self.id_segments);
+        let hash_3 = SortSolution::run_segments_par_sort_unstable(&self.id_segments);
+        let hash_4 = SortSolution::run_segments_bin_sort(&self.id_segments);
+        let hash_5 = SortSolution::run_segments_par_bin_sort(&self.id_segments);
+
+        debug_assert_eq!(hash_0, hash_1);
+        debug_assert_eq!(hash_0, hash_2);
+        debug_assert_eq!(hash_0, hash_3);
+        debug_assert_eq!(hash_0, hash_4);
+        debug_assert_eq!(hash_0, hash_5);
+        println!("---");
     }
 
     fn checkerboard_segments(size: i32, offset: i32, n: usize) -> Vec<Segment> {

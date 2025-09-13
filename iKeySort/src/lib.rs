@@ -81,7 +81,7 @@
 //! use i_key_sort::sort::one_key::OneKeySort;
 //! use core::mem::MaybeUninit;
 //!
-//! let mut buf: Vec<MaybeUninit<i32>> = Vec::new();
+//! let mut buf = Vec::new();
 //! let mut v = vec![3, 2, 1];
 //!
 //! v.sort_by_one_key_and_buffer(true, &mut buf, |&x| x);
