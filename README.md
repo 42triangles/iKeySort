@@ -1,1 +1,1 @@
-/Users/nailsharipov/Projects/Rust/iShape/iKeySort/iKeySort/README.md
+iKeySort/README.md
