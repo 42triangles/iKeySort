@@ -79,7 +79,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Small N (40,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *0.001274*  | *0.001191*    | *0.000887*      | *0.000622*        | *0.000555* | ***0.000418*** |
 | 24 bytes     | *0.001616*  | *0.001722*    | *0.000641*      | *0.000692*        | *0.000647* | ***0.000506*** |
@@ -87,7 +87,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Medium N (4,000,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *0.218301*  | *0.174744*    | *0.080812*      | *0.061049*        | *0.067390* | ***0.044537*** |
 | 24 bytes     | *0.287528*  | *0.240101*    | *0.116495*      | *0.080029*        | *0.088140* | ***0.066674*** |
@@ -95,7 +95,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Large N (64,000,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *4.534396*  | *3.330774*    | *1.567763*      | *1.148979*        | *1.626500* | ***0.826504*** |
 | 24 bytes     | *6.122517*  | *4.541138*    | *2.333630*      | *1.552827*        | *2.191277* | ***1.229364*** |
@@ -107,7 +107,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Small N (100,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *0.004663*  | *0.003197*    | *0.001784*      | ***0.001246***    | *0.002610* | *0.001300* |
 | 24 bytes     | *0.007669*  | *0.004744*    | *0.002694*      | ***0.001393***    | *0.002492* | *0.002166* |
@@ -115,7 +115,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Medium N (1,000,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *0.058683*  | *0.040153*    | *0.021345*      | *0.012079*        | *0.024275* | ***0.010760*** |
 | 24 bytes     | *0.074868*  | *0.054684*    | *0.029665*      | *0.015684*        | *0.034833* | ***0.018664*** |
@@ -123,7 +123,7 @@ assert_eq!(v, [1, 2, 3]);
 
 **Large N (10,000,000 elements)**
 
-| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par bin_sort |
+| Segment size | sort_stable | sort_unstable | par_sort_stable | par_sort_unstable | bin_sort | par_bin_sort |
 |--------------|-------------|---------------|-----------------|-------------------|----------|--------------|
 | 16 bytes     | *0.490327*  | *0.603355*    | *0.200557*      | *0.123935*        | *0.244938* | ***0.120322*** |
 | 24 bytes     | *0.613799*  | *0.789910*    | *0.310511*      | ***0.182654***    | *0.299847* | *0.189350* |
