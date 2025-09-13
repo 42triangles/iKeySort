@@ -66,7 +66,7 @@ assert_eq!(v, [(1, 0, 3), (1, 0, 9), (1, 1, 1)]);
 use i_key_sort::sort::two_keys_cmp::TwoKeysAndCmpSort;
 use core::mem::MaybeUninit;
 
-let mut buf: Vec<MaybeUninit<i32>> = Vec::new();
+let mut buf = Vec::new();
 let mut v = vec![3, 2, 1];
 
 v.sort_by_one_key_and_buffer(true, &mut buf, |&x| x);
