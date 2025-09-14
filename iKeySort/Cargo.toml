@@ -1,6 +1,6 @@
 [package]
 name = "i_key_sort"
-version = "0.9.1"
+version = "0.10.0"
 authors = ["Nail Sharipov <nailxsharipov@gmail.com>"]
 edition = "2024"
 description = "Counting sort algorithm."
@@ -18,7 +18,7 @@ codegen-units = 1
 rayon = { optional = true, version = "^1.11" }
 
 [features]
-#default = ["allow_multithreading"]
+
 default = []
 std = []
 allow_multithreading = ["std", "dep:rayon"]
