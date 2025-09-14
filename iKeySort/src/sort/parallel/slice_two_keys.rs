@@ -1,17 +1,15 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::slice_one_key::OneKeyBinSortParallel;
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
-use core::mem::MaybeUninit;
 use rayon::prelude::*;
 use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 
 pub(crate) trait TwoKeysBinSortParallel<T> {
     fn par_sort_by_two_keys<K1, K2, F1, F2>(
         &mut self,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where
@@ -25,7 +23,7 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
     #[inline]
     fn par_sort_by_two_keys<K1, K2, F1, F2>(
         &mut self,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where

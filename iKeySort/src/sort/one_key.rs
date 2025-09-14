@@ -2,7 +2,6 @@ use crate::sort::bin_layout::BIN_SORT_MIN;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
 
 /// Sort a slice by a single integer‐like key function.
 ///
@@ -18,7 +17,7 @@ use core::mem::MaybeUninit;
 /// Two variants:
 /// - [`sort_by_one_key`] — allocates a buffer internally.
 /// - [`sort_by_one_key_and_buffer`] — caller provides a reusable
-///   `Vec<MaybeUninit<T>>` to avoid allocations.
+///   `Vec<T>` to avoid allocations.
 ///
 /// # Examples
 /// ```
@@ -38,7 +37,7 @@ pub trait OneKeySort<T> {
     fn sort_by_one_key_and_buffer<K, F>(
         &mut self,
         parallel: bool,
-        buffer: &mut Vec<MaybeUninit<T>>,
+        buffer: &mut Vec<T>,
         key: F,
     ) where
         K: SortKey,
@@ -55,7 +54,7 @@ pub trait OneKeySort<T> {
     fn sort_by_one_key_and_buffer<K, F>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F,
     ) where
         K: SortKey + Send + Sync,
@@ -81,7 +80,7 @@ impl<T: Copy> OneKeySort<T> for [T] {
     fn sort_by_one_key_and_buffer<K: SortKey, F: KeyFn<T, K>>(
         &mut self,
         _: bool,
-        buffer: &mut Vec<MaybeUninit<T>>,
+        buffer: &mut Vec<T>,
         key: F,
     ) {
         if self.len() < BIN_SORT_MIN {
@@ -121,7 +120,7 @@ where
     fn sort_by_one_key_and_buffer<K, F>(
         &mut self,
         parallel: bool,
-        buffer: &mut Vec<MaybeUninit<T>>,
+        buffer: &mut Vec<T>,
         key: F,
     ) where
         K: SortKey + Send + Sync,

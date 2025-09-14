@@ -1,16 +1,14 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
 use rayon::prelude::*;
-use core::mem::MaybeUninit;
 use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 
 pub(crate) trait OneKeyBinSortCmpParallel<T> {
     fn par_sort_by_one_key_then_by<K, F1, F2>(
         &mut self,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
@@ -23,7 +21,7 @@ impl<T: Copy + Send + Sync> OneKeyBinSortCmpParallel<T> for [T] {
     #[inline]
     fn par_sort_by_one_key_then_by<K, F1, F2>(
         &mut self,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where

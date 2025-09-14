@@ -2,7 +2,6 @@ use crate::sort::bin_layout::BIN_SORT_MIN;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::serial::slice_two_keys::TwoKeysBinSortSerial;
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
 
 /// Sort a slice lexicographically by two integer‐like keys.
 ///
@@ -30,7 +29,7 @@ pub trait TwoKeysSort<T> {
     fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where
@@ -52,7 +51,7 @@ pub trait TwoKeysSort<T> {
     fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where
@@ -83,7 +82,7 @@ impl<T: Copy> TwoKeysSort<T> for [T] {
     fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         _: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where
@@ -131,7 +130,7 @@ where
     fn sort_by_two_keys_and_buffer<K1, K2, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where

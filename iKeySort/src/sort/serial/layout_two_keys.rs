@@ -1,15 +1,13 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
 
 impl<K1: SortKey> BinLayout<K1> {
     #[inline]
     pub(super) fn sort_by_two_keys_and_uninit_buffer<T, K2, F1, F2>(
         &self,
         src: &mut [T],
-        buf: &mut Vec<MaybeUninit<T>>,
+        buf: &mut Vec<T>,
         key1: F1,
         key2: F2,
     ) where
@@ -18,19 +16,14 @@ impl<K1: SortKey> BinLayout<K1> {
         F1: KeyFn<T, K1>,
         F2: KeyFn<T, K2>,
     {
-        buf.resize_to_new_len(src.len());
-
         let mapper = self.spread_with_uninit_buffer(src, buf, key1);
-
-        // by this time the buffer should be fully initialized
-        let init_buffer = buf.assume_init_slice_mut();
 
         if self.bin_width_is_one() {
             // all elements inside bins have the same key1
             // continue sort elements inside bins by key2
-            mapper.sort_chunks_by_one_key(src, init_buffer, key2, true);
+            mapper.sort_chunks_by_one_key(src, buf, key2, true);
         } else {
-            mapper.sort_chunks_by_two_keys(src, init_buffer, key1, key2, true);
+            mapper.sort_chunks_by_two_keys(src, buf, key1, key2, true);
         }
     }
 

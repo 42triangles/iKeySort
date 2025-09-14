@@ -1,7 +1,6 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
-use core::mem::MaybeUninit;
 use alloc::vec::Vec;
 
 pub(crate) trait TwoKeysBinSortCmpSerial<T> {
@@ -21,7 +20,7 @@ pub(crate) trait TwoKeysBinSortCmpSerial<T> {
 
     fn ser_sort_by_two_keys_then_by_and_uninit_buffer<K1, K2, F1, F2, F3>(
         &mut self,
-        buf: &mut Vec<MaybeUninit<T>>,
+        buf: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,
@@ -61,7 +60,7 @@ impl<T: Copy> TwoKeysBinSortCmpSerial<T> for [T] {
     #[inline]
     fn ser_sort_by_two_keys_then_by_and_uninit_buffer<K1, K2, F1, F2, F3>(
         &mut self,
-        buf: &mut Vec<MaybeUninit<T>>,
+        buf: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,

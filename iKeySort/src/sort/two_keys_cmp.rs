@@ -2,7 +2,6 @@ use crate::sort::bin_layout::BIN_SORT_MIN;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::serial::slice_two_keys_cmp::TwoKeysBinSortCmpSerial;
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
 
 /// Sort a slice lexicographically by two integer‐like keys, then by a comparator.
 ///
@@ -38,7 +37,7 @@ pub trait TwoKeysAndCmpSort<T> {
     fn sort_by_two_keys_then_by_and_buffer<K1, K2, F1, F2, F3>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,
@@ -68,7 +67,7 @@ pub trait TwoKeysAndCmpSort<T> {
     fn sort_by_two_keys_then_by_and_buffer<K1, K2, F1, F2, F3>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,
@@ -107,7 +106,7 @@ impl<T: Copy> TwoKeysAndCmpSort<T> for [T] {
     fn sort_by_two_keys_then_by_and_buffer<K1, K2, F1, F2, F3>(
         &mut self,
         _: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,
@@ -168,7 +167,7 @@ where
     fn sort_by_two_keys_then_by_and_buffer<K1, K2, F1, F2, F3>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key1: F1,
         key2: F2,
         compare: F3,

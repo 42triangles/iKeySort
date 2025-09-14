@@ -1,15 +1,13 @@
 use crate::sort::bin_layout::BinLayout;
-use crate::sort::buffer::{MaybeUninitInit, MaybeUninitResize};
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::cpu_count::CPUCount;
 use crate::sort::parallel::sub_sort::{FragmentationByMarks, SubSortFragment};
 use crate::sort::serial::slice_one_key::OneKeyBinSortSerial;
-use core::mem::MaybeUninit;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefMutIterator;
 
 pub(crate) trait OneKeyBinSortParallel<T> {
-    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<MaybeUninit<T>>, key: F)
+    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<T>, key: F)
     where
         K: SortKey + Send + Sync,
         F: KeyFn<T, K> + Send + Sync;
@@ -17,7 +15,7 @@ pub(crate) trait OneKeyBinSortParallel<T> {
 
 impl<T: Copy + Send + Sync> OneKeyBinSortParallel<T> for [T] {
     #[inline]
-    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<MaybeUninit<T>>, key: F)
+    fn par_sort_by_one_key<K, F>(&mut self, reusable_buffer: &mut Vec<T>, key: F)
     where
         K: SortKey + Send + Sync,
         F: KeyFn<T, K> + Send + Sync,

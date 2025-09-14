@@ -1,13 +1,12 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
-use core::mem::MaybeUninit;
 use core::ops::Range;
 
 pub(super) struct PreSortFragment<'a, T> {
     pub(super) base: usize,
     pub(super) src: &'a mut [T],
-    pub(super) buf: &'a mut [MaybeUninit<T>],
+    pub(super) buf: &'a mut [T],
 }
 
 pub(super) struct IdRange {
@@ -58,7 +57,7 @@ where
 pub(super) trait FragmentationByCount<T> {
     fn fragment_by_count<'a>(
         &'a mut self,
-        buffer: &'a mut [MaybeUninit<T>],
+        buffer: &'a mut [T],
         count: usize,
     ) -> Vec<PreSortFragment<'a, T>>;
 }
@@ -67,7 +66,7 @@ impl<T> FragmentationByCount<T> for [T] {
     #[inline]
     fn fragment_by_count<'a>(
         &'a mut self,
-        buffer: &'a mut [MaybeUninit<T>],
+        buffer: &'a mut [T],
         count: usize,
     ) -> Vec<PreSortFragment<'a, T>> {
         debug_assert_eq!(self.len(), buffer.len());

@@ -1,7 +1,6 @@
 use crate::sort::bin_layout::BinLayout;
 use crate::sort::buffer::CopyFromNotOverlap;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
-use core::mem::MaybeUninit;
 use alloc::vec::Vec;
 
 pub(crate) trait OneKeyBinSortCmpSerial<T> {
@@ -19,7 +18,7 @@ pub(crate) trait OneKeyBinSortCmpSerial<T> {
 
     fn ser_sort_by_one_key_then_by_and_uninit_buffer<K, F1, F2>(
         &mut self,
-        buf: &mut Vec<MaybeUninit<T>>,
+        buf: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
@@ -56,7 +55,7 @@ impl<T: Copy> OneKeyBinSortCmpSerial<T> for [T] {
     #[inline]
     fn ser_sort_by_one_key_then_by_and_uninit_buffer<K, F1, F2>(
         &mut self,
-        buf: &mut Vec<MaybeUninit<T>>,
+        buf: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where

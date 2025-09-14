@@ -35,64 +35,77 @@ mod tests {
 
     #[test]
     fn test_circle_one_key() {
+        let mut buffer = Vec::new();
         for n in 1..1_000 {
-            circle_one_key_test(n, 2.0);
-            circle_one_key_test(n, 10.0);
-            circle_one_key_test(n, 20.0);
-            circle_one_key_test(n, 50.0);
-            circle_one_key_test(n, 100.0);
-            circle_one_key_test(n, 200.0);
-            circle_one_key_test(n, 1000.0);
+            circle_one_key_test(n, 2.0, &mut buffer);
+            circle_one_key_test(n, 10.0, &mut buffer);
+            circle_one_key_test(n, 20.0, &mut buffer);
+            circle_one_key_test(n, 50.0, &mut buffer);
+            circle_one_key_test(n, 100.0, &mut buffer);
+            circle_one_key_test(n, 200.0, &mut buffer);
+            circle_one_key_test(n, 1000.0, &mut buffer);
         }
+
+        circle_one_key_test(10_000, 10_000.0, &mut buffer);
+        circle_one_key_test(100_000, 100_000.0, &mut buffer);
     }
 
     #[test]
     fn test_circle_one_key_cmp() {
+        let mut buffer = Vec::new();
         for n in 1..1_000 {
-            circle_one_key_cmp_test(n, 2.0);
-            circle_one_key_cmp_test(n, 10.0);
-            circle_one_key_cmp_test(n, 20.0);
-            circle_one_key_cmp_test(n, 50.0);
-            circle_one_key_cmp_test(n, 100.0);
-            circle_one_key_cmp_test(n, 200.0);
-            circle_one_key_cmp_test(n, 1000.0);
+            circle_one_key_cmp_test(n, 2.0, &mut buffer);
+            circle_one_key_cmp_test(n, 10.0, &mut buffer);
+            circle_one_key_cmp_test(n, 20.0, &mut buffer);
+            circle_one_key_cmp_test(n, 50.0, &mut buffer);
+            circle_one_key_cmp_test(n, 100.0, &mut buffer);
+            circle_one_key_cmp_test(n, 200.0, &mut buffer);
+            circle_one_key_cmp_test(n, 1000.0, &mut buffer);
         }
+        circle_one_key_cmp_test(10_000, 10_000.0, &mut buffer);
+        circle_one_key_cmp_test(100_000, 100_000.0, &mut buffer);
     }
 
     #[test]
     fn test_circle_two_keys() {
+        let mut buffer = Vec::new();
         for n in 1..1_000 {
-            circle_two_keys_test(n, 2.0);
-            circle_two_keys_test(n, 10.0);
-            circle_two_keys_test(n, 20.0);
-            circle_two_keys_test(n, 50.0);
-            circle_two_keys_test(n, 100.0);
-            circle_two_keys_test(n, 200.0);
-            circle_two_keys_test(n, 1000.0);
+            circle_two_keys_test(n, 2.0, &mut buffer);
+            circle_two_keys_test(n, 10.0, &mut buffer);
+            circle_two_keys_test(n, 20.0, &mut buffer);
+            circle_two_keys_test(n, 50.0, &mut buffer);
+            circle_two_keys_test(n, 100.0, &mut buffer);
+            circle_two_keys_test(n, 200.0, &mut buffer);
+            circle_two_keys_test(n, 1000.0, &mut buffer);
         }
+        circle_two_keys_test(10_000, 10_000.0, &mut buffer);
+        circle_two_keys_test(100_000, 100_000.0, &mut buffer);
     }
 
     #[test]
     fn test_circle_two_keys_cmp() {
-        for n in 1..1_000 {
-            circle_two_keys_cmp_test(n, 2.0);
-            circle_two_keys_cmp_test(n, 10.0);
-            circle_two_keys_cmp_test(n, 20.0);
-            circle_two_keys_cmp_test(n, 50.0);
-            circle_two_keys_cmp_test(n, 100.0);
-            circle_two_keys_cmp_test(n, 200.0);
-            circle_two_keys_cmp_test(n, 1000.0);
+        let mut buffer = Vec::new();
+        for n in 1..1_500 {
+            circle_two_keys_cmp_test(n, 2.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 10.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 20.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 50.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 100.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 200.0, &mut buffer);
+            circle_two_keys_cmp_test(n, 1000.0, &mut buffer);
         }
+        circle_two_keys_cmp_test(10_000, 10_000.0, &mut buffer);
+        circle_two_keys_cmp_test(100_000, 100_000.0, &mut buffer);
     }
 
-    fn circle_one_key_test(count: usize, radius: f64) {
+    fn circle_one_key_test(count: usize, radius: f64, buffer: &mut Vec<i32>) {
         let mut segments = circle_x(radius, count);
 
         let res: Vec<_> = [false, true]
             .iter()
             .map(|&parallel| {
                 let mut arr = segments.clone();
-                arr.sort_by_one_key(parallel, |&x| x);
+                arr.sort_by_one_key_and_buffer(parallel, buffer, |&x| x);
                 arr
             })
             .collect();
@@ -104,53 +117,60 @@ mod tests {
         }
     }
 
-    fn circle_one_key_cmp_test(count: usize, radius: f64) {
+    fn circle_one_key_cmp_test(count: usize, radius: f64, buffer: &mut Vec<Point>) {
         let mut segments = circle_point(radius, count);
 
         let res: Vec<_> = [false, true]
             .iter()
             .map(|&parallel| {
                 let mut arr = segments.clone();
-                arr.sort_by_one_key_then_by(parallel, |p| p.x, |p0, p1| p0.y.cmp(&p1.y));
-                arr
-            })
-            .collect();
-
-        segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
-
-        for arr in res {
-            assert_eq!(arr, segments);
-        }
-    }
-
-    fn circle_two_keys_test(count: usize, radius: f64) {
-        let mut segments = circle_point(radius, count);
-
-        let res: Vec<_> = [false, true]
-            .iter()
-            .map(|&parallel| {
-                let mut arr = segments.clone();
-                arr.sort_by_two_keys(parallel, |p| p.x, |p| p.y);
-                arr
-            })
-            .collect();
-
-        segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
-
-        for arr in res {
-            assert_eq!(arr, segments);
-        }
-    }
-
-    fn circle_two_keys_cmp_test(count: usize, radius: f64) {
-        let mut segments = circle_segments(radius, 0.0, count);
-        let res: Vec<_> = [false, true]
-            .iter()
-            .map(|&parallel| {
-                let mut arr = segments.clone();
-
-                arr.sort_by_two_keys_then_by(
+                arr.sort_by_one_key_then_by_and_buffer(
                     parallel,
+                    buffer,
+                    |p| p.x,
+                    |p0, p1| p0.y.cmp(&p1.y),
+                );
+                arr
+            })
+            .collect();
+
+        segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
+
+        for arr in res {
+            assert_eq!(arr, segments);
+        }
+    }
+
+    fn circle_two_keys_test(count: usize, radius: f64, buffer: &mut Vec<Point>) {
+        let mut segments = circle_point(radius, count);
+
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
+                arr.sort_by_two_keys_and_buffer(parallel, buffer, |p| p.x, |p| p.y);
+                arr
+            })
+            .collect();
+
+        segments.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x).then(p0.y.cmp(&p1.y)));
+
+        for arr in res {
+            assert_eq!(arr, segments);
+        }
+    }
+
+    fn circle_two_keys_cmp_test(count: usize, radius: f64, buffer: &mut Vec<Segment>) {
+        let mut segments = circle_segments(radius, 0.0, count);
+
+        let res: Vec<_> = [false, true]
+            .iter()
+            .map(|&parallel| {
+                let mut arr = segments.clone();
+
+                arr.sort_by_two_keys_then_by_and_buffer(
+                    parallel,
+                    buffer,
                     |s| s.a.x,
                     |s| s.a.y,
                     |s0, s1| s0.b.x.cmp(&s1.b.x).then(s0.b.y.cmp(&s1.b.y)),

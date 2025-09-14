@@ -1,10 +1,8 @@
 use crate::sort::bin_layout::{BinLayout, MAX_BINS_COUNT};
-use crate::sort::buffer::MaybeUninitInit;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::parallel::pre_sort::{PreSortFragment, IdRange, FragmentationByCount};
 use rayon::iter::ParallelIterator;
 use rayon::iter::{IntoParallelRefIterator, IntoParallelRefMutIterator};
-use core::mem::MaybeUninit;
 use core::ops::Range;
 use core::ptr;
 
@@ -65,7 +63,7 @@ impl<K: SortKey + Send + Sync> BinLayout<K> {
         &self,
         cpu: usize,
         src: &mut [T],
-        buf: &mut [MaybeUninit<T>],
+        buf: &mut [T],
         key: F,
     ) -> Vec<usize>
     where

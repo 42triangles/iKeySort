@@ -2,7 +2,6 @@ use crate::sort::bin_layout::BIN_SORT_MIN;
 use crate::sort::key::{CmpFn, KeyFn, SortKey};
 use crate::sort::serial::slice_one_key_cmp::OneKeyBinSortCmpSerial;
 use alloc::vec::Vec;
-use core::mem::MaybeUninit;
 
 /// Sort a slice by a primary integer‐like key, then by a comparator.
 ///
@@ -31,7 +30,7 @@ pub trait OneKeyAndCmpSort<T> {
     fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
@@ -51,7 +50,7 @@ pub trait OneKeyAndCmpSort<T> {
     fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
@@ -80,7 +79,7 @@ impl<T: Copy> OneKeyAndCmpSort<T> for [T] {
     fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         _: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
@@ -126,7 +125,7 @@ where
     fn sort_by_one_key_then_by_and_buffer<K, F1, F2>(
         &mut self,
         parallel: bool,
-        reusable_buffer: &mut Vec<MaybeUninit<T>>,
+        reusable_buffer: &mut Vec<T>,
         key: F1,
         compare: F2,
     ) where
