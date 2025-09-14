@@ -40,8 +40,6 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortCmpParallel<T> for [T] {
             return;
         }
 
-        reusable_buffer.resize_to_new_len(self.len());
-
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
@@ -65,8 +63,7 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortCmpParallel<T> for [T] {
 
         let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key1);
 
-        let init_buf = reusable_buffer.assume_init_slice_mut();
-        self.fragment_by_marks(init_buf, &marks)
+        self.fragment_by_marks(reusable_buffer, &marks)
             .par_iter_mut()
             .for_each(|f| f.sort_by_two_keys_then_by(key1, key2, compare));
     }

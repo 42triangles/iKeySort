@@ -36,8 +36,6 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
             return;
         }
 
-        reusable_buffer.resize_to_new_len(self.len());
-
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
@@ -56,8 +54,7 @@ impl<T: Copy + Send + Sync> TwoKeysBinSortParallel<T> for [T] {
 
         let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key1);
 
-        let init_buf = reusable_buffer.assume_init_slice_mut();
-        let mut frags = self.fragment_by_marks(init_buf, &marks);
+        let mut frags = self.fragment_by_marks(reusable_buffer, &marks);
 
         frags
             .par_iter_mut()

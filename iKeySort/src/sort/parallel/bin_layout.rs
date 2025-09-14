@@ -63,23 +63,27 @@ impl<K: SortKey + Send + Sync> BinLayout<K> {
         &self,
         cpu: usize,
         src: &mut [T],
-        buf: &mut [T],
+        buf: &mut Vec<T>,
         key: F,
     ) -> Vec<usize>
     where
         T: Copy + Send + Sync,
         F: KeyFn<T, K> + Send + Sync,
     {
-        debug_assert_eq!(src.len(), buf.len());
+        buf.clear();
+        if buf.capacity() < src.len() {
+            buf.reserve(src.len());
+        }
 
         let mut fragments = src.fragment_by_count(buf, cpu);
 
         let groups = self.par_spread(&mut fragments, key);
 
-        // by this time the buffer contains semi sorted segments and should be fully initialized
-        let res = buf.assume_init_slice_mut();
+        // at this time buffer is fully initialized
+        #[allow(clippy::uninit_vec)]
+        unsafe { buf.set_len(src.len()); }
 
-        copy_groups(src, res, groups)
+        copy_groups(src, buf, groups)
     }
 
     #[inline]

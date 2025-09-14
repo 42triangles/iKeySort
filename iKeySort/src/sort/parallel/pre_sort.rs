@@ -2,11 +2,12 @@ use crate::sort::bin_layout::BinLayout;
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::mapper::Mapper;
 use core::ops::Range;
+use std::mem::MaybeUninit;
 
 pub(super) struct PreSortFragment<'a, T> {
     pub(super) base: usize,
     pub(super) src: &'a mut [T],
-    pub(super) buf: &'a mut [T],
+    pub(super) buf: &'a mut [MaybeUninit<T>],
 }
 
 pub(super) struct IdRange {
@@ -34,7 +35,7 @@ where
         for val in self.src.iter() {
             let index = mapper.next_index(layout.index(key(val)));
             unsafe {
-                self.buf.get_unchecked_mut(index).write(*val);
+                let _ = *self.buf.get_unchecked_mut(index).write(*val);
             }
         }
 
@@ -57,7 +58,7 @@ where
 pub(super) trait FragmentationByCount<T> {
     fn fragment_by_count<'a>(
         &'a mut self,
-        buffer: &'a mut [T],
+        buffer: &'a mut Vec<T>,
         count: usize,
     ) -> Vec<PreSortFragment<'a, T>>;
 }
@@ -66,11 +67,9 @@ impl<T> FragmentationByCount<T> for [T] {
     #[inline]
     fn fragment_by_count<'a>(
         &'a mut self,
-        buffer: &'a mut [T],
+        buffer: &'a mut Vec<T>,
         count: usize,
     ) -> Vec<PreSortFragment<'a, T>> {
-        debug_assert_eq!(self.len(), buffer.len());
-
         let (capacity, step_len) = if self.len() < count {
             (self.len(), 1)
         } else {
@@ -79,15 +78,16 @@ impl<T> FragmentationByCount<T> for [T] {
             (count, step_len)
         };
 
+        let mut scratch: &mut [MaybeUninit<T>] = &mut buffer.spare_capacity_mut()[..self.len()];
+
         let mut frags = Vec::with_capacity(capacity);
         let mut base = 0;
 
         let mut src = self;
-        let mut buf = buffer;
 
         for _ in 0..capacity.saturating_sub(1) {
             let (left_src, right_src) = src.split_at_mut(step_len);
-            let (left_buf, right_buf) = buf.split_at_mut(step_len);
+            let (left_buf, right_buf) = scratch.split_at_mut(step_len);
 
             frags.push(PreSortFragment {
                 base,
@@ -96,12 +96,16 @@ impl<T> FragmentationByCount<T> for [T] {
             });
 
             src = right_src;
-            buf = right_buf;
+            scratch = right_buf;
 
             base += step_len;
         }
 
-        frags.push(PreSortFragment { base, src, buf });
+        frags.push(PreSortFragment {
+            base,
+            src,
+            buf: scratch,
+        });
 
         frags
     }

@@ -36,7 +36,6 @@ impl<T: Copy + Send + Sync> OneKeyBinSortCmpParallel<T> for [T] {
         let cpu = if let Some(count) = CPUCount::should_parallel(self.len()) {
             count
         } else {
-            reusable_buffer.resize_to_new_len(self.len());
             self.ser_sort_by_one_key_then_by_and_uninit_buffer(reusable_buffer, key, compare);
             return;
         };
@@ -49,12 +48,9 @@ impl<T: Copy + Send + Sync> OneKeyBinSortCmpParallel<T> for [T] {
             return;
         };
 
-        reusable_buffer.resize_to_new_len(self.len());
         let marks = layout.par_pre_sort(cpu, self, reusable_buffer, key);
 
-        let init_buf = reusable_buffer.assume_init_slice_mut();
-
-        self.fragment_by_marks(init_buf, &marks)
+        self.fragment_by_marks(reusable_buffer, &marks)
             .par_iter_mut()
             .for_each(|f| f.sort_by_one_key_then_by(key, compare));
     }
