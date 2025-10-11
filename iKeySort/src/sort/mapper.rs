@@ -46,7 +46,7 @@ impl Mapper {
     }
 
     #[inline(always)]
-    pub(crate) fn iter(&self) -> Iter<Chunk> {
+    pub(crate) fn iter(&self) -> Iter<'_, Chunk> {
         unsafe { self.chunks.get_unchecked(..self.count) }.iter()
     }
 }

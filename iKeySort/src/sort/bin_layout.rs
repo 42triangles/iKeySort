@@ -1,6 +1,10 @@
 use crate::sort::key::{KeyFn, SortKey};
 use crate::sort::min_max::MinMax;
 
+pub(crate) const BIN_SORT_MIN: usize = 64;
+pub(crate) const MAX_BINS_POWER: u32 = 8;
+pub(crate) const MAX_BINS_COUNT: usize = 1 << MAX_BINS_POWER;
+
 #[derive(Debug, Clone)]
 pub(crate) struct BinLayout<K> {
     pub(crate) min_key: K,
@@ -9,10 +13,19 @@ pub(crate) struct BinLayout<K> {
     bin_width_is_one: bool,
 }
 
-pub(crate) const BIN_SORT_MIN: usize = 64;
-pub(crate) const MAX_BINS_POWER: u32 = 8;
+#[derive(Clone, Copy)]
+struct LayoutConstraints {
+    max_split_count: usize,
+}
 
-pub(crate) const MAX_BINS_COUNT: usize = 1 << MAX_BINS_POWER;
+impl Default for LayoutConstraints {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            max_split_count: MAX_BINS_COUNT,
+        }
+    }
+}
 
 impl<K: SortKey> BinLayout<K> {
     #[inline(always)]
@@ -32,10 +45,9 @@ impl<K: SortKey> BinLayout<K> {
         self.index(self.max_key) + 1
     }
 
-    #[inline(always)]
-    pub(crate) fn new(min_key: K, max_key: K, max_bins_count: usize) -> BinLayout<K> {
+    fn with_constraints(min_key: K, max_key: K, constraints: LayoutConstraints) -> BinLayout<K> {
         let length = max_key.difference(min_key);
-        if length < max_bins_count {
+        if length < constraints.max_split_count {
             return Self {
                 min_key,
                 max_key,
@@ -45,7 +57,7 @@ impl<K: SortKey> BinLayout<K> {
         }
 
         let scale = length.saturating_add(1).ilog2_ceil();
-        let power = scale.saturating_sub(max_bins_count.ilog2()) as usize;
+        let power = scale.saturating_sub(constraints.max_split_count.ilog2()) as usize;
 
         Self {
             min_key,
@@ -67,7 +79,7 @@ impl<K: SortKey> BinLayout<K> {
             return None;
         }
 
-        Some(Self::new(min_key, max_key, MAX_BINS_COUNT))
+        Some(Self::with_constraints(min_key, max_key, Default::default()))
     }
 }
 
@@ -89,24 +101,24 @@ impl Log2 for usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::sort::bin_layout::{BinLayout, Log2, MAX_BINS_COUNT};
+    use crate::sort::bin_layout::{BinLayout, Log2};
 
     #[test]
     fn test_0() {
-        let layout = BinLayout::<i32>::new(0i32, 3i32, MAX_BINS_COUNT);
+        let layout = BinLayout::<i32>::with_constraints(0i32, 3i32, Default::default());
         assert_eq!(layout.power, 0);
     }
 
     #[test]
     fn test_1() {
-        let layout = BinLayout::<i32>::new(0, 255, MAX_BINS_COUNT);
+        let layout = BinLayout::<i32>::with_constraints(0, 255, Default::default());
 
         assert_eq!(layout.power, 0);
     }
 
     #[test]
     fn test_2() {
-        let layout = BinLayout::<i32>::new(0, 256, MAX_BINS_COUNT);
+        let layout = BinLayout::<i32>::with_constraints(0, 256, Default::default());
 
         assert_eq!(layout.power, 1);
     }
